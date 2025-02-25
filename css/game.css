@@ -1,0 +1,351 @@
+/* Futuristic form elements */
+input[type="number"], 
+input[type="text"],
+select {
+  width: 90px;
+  padding: 10px 15px;
+  border-radius: 6px;
+  border: 1px solid var(--primary);
+  background: rgba(0, 20, 40, 0.6);
+  color: var(--text);
+  margin-left: 10px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 5px rgba(0, 252, 255, 0.3);
+}
+
+input[type="number"]:focus, 
+input[type="text"]:focus, 
+select:focus {
+  border-color: var(--secondary);
+  box-shadow: 0 0 15px rgba(255, 0, 255, 0.5);
+}
+
+/* Cyber slider */
+.cyber-slider {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin: 15px 0;
+}
+
+.cyber-slider label {
+  margin-right: 15px;
+  min-width: 120px;
+}
+
+.slider-container {
+  flex: 1;
+  position: relative;
+}
+
+.slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(0, 20, 40, 0.6);
+  border: 1px solid var(--primary);
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--primary);
+  cursor: pointer;
+  box-shadow: 0 0 10px var(--primary);
+  transition: all 0.2s ease;
+}
+
+.slider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--primary);
+  cursor: pointer;
+  box-shadow: 0 0 10px var(--primary);
+  transition: all 0.2s ease;
+}
+
+.slider:hover::-webkit-slider-thumb {
+  background: var(--secondary);
+  box-shadow: 0 0 15px var(--secondary);
+}
+
+.slider-value {
+  margin-left: 15px;
+  min-width: 50px;
+  text-align: center;
+  font-family: 'Orbitron', sans-serif;
+  color: var(--primary);
+  font-weight: bold;
+}
+
+/* Controls help section */
+.controls-help {
+  background: rgba(0, 20, 40, 0.7);
+  border-radius: 10px;
+  padding: 15px 20px;
+  margin-top: 20px;
+  border: 1px solid var(--primary);
+  box-shadow: 0 0 15px rgba(0, 252, 255, 0.2);
+}
+
+.controls-help h4 {
+  margin: 0 0 15px 0;
+  font-size: 18px;
+  color: var(--primary);
+  text-shadow: 0 0 5px var(--primary);
+}
+
+.controls-help p {
+  margin: 8px 0;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+}
+
+.key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 252, 255, 0.1);
+  border: 1px solid var(--primary);
+  padding: 5px 12px;
+  border-radius: 6px;
+  margin: 0 5px;
+  min-width: 30px;
+  height: 30px;
+  box-shadow: 0 0 5px rgba(0, 252, 255, 0.3);
+  font-family: 'Orbitron', sans-serif;
+  font-weight: bold;
+}
+
+/* Power-up display effects */
+.power-up-display {
+  position: absolute;
+  height: 100%;
+  width: 100px;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding-top: 100px;
+}
+
+.power-up-display.left {
+  left: 10px;
+}
+
+.power-up-display.right {
+  right: 10px;
+}
+
+.power-up-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  margin-bottom: 10px;
+  border-radius: 50%;
+  background: rgba(0, 20, 40, 0.8);
+  border: 2px solid;
+  position: relative;
+  animation: pulse 2s infinite;
+}
+
+.power-up-icon::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 2px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* Store items styling */
+.store-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.store-item {
+  background: rgba(0, 20, 40, 0.7);
+  border: 2px solid var(--primary);
+  border-radius: 10px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.store-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3), 0 0 15px var(--primary);
+  border-color: var(--secondary);
+}
+
+.store-item-image {
+  height: 120px;
+  background: rgba(0, 10, 30, 0.7);
+  border-radius: 8px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.store-item-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0 0 10px 0;
+  color: var(--primary);
+}
+
+.store-item-description {
+  font-size: 14px;
+  margin-bottom: 15px;
+  flex-grow: 1;
+}
+
+.store-item-price {
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--tertiary);
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+}
+
+.currency-icon {
+  margin-right: 5px;
+  font-size: 18px;
+}
+
+/* Multiplayer lobby */
+.lobby-container {
+  width: 100%;
+  max-width: 800px;
+}
+
+.player-list {
+  margin: 20px 0;
+}
+
+.player-item {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  background: rgba(0, 20, 40, 0.5);
+  border-radius: 8px;
+  margin-bottom: 10px;
+  transition: all 0.2s ease;
+  border-left: 4px solid var(--primary);
+}
+
+.player-item:hover {
+  background: rgba(0, 20, 40, 0.7);
+  transform: translateX(5px);
+}
+
+.player-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 15px;
+  background: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--background);
+}
+
+.player-info {
+  flex: 1;
+}
+
+.player-name {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.player-status {
+  font-size: 14px;
+  color: var(--tertiary);
+}
+
+.player-stats {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.player-stat {
+  display: flex;
+  align-items: center;
+}
+
+.player-stat i {
+  margin-right: 5px;
+  color: var(--primary);
+}
+
+/* PayPal button styling */
+#paypal-button-container {
+  width: 100%;
+  margin-top: 20px;
+}
+
+/* Mobile controls */
+.mobile-controls {
+  display: flex;
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  width: 100%;
+  justify-content: space-between;
+  padding: 0 20px;
+  pointer-events: all;
+}
+
+.mobile-control {
+  width: 80px;
+  height: 80px;
+  background: rgba(0, 20, 40, 0.6);
+  border: 2px solid var(--primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  color: var(--primary);
+  touch-action: manipulation;
+}
+
+.mobile-control:active {
+  background: rgba(0, 252, 255, 0.2);
+  transform: scale(1.1);
+}

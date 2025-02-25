@@ -1,0 +1,101 @@
+/* Mobile and responsive styles */
+@media (max-width: 1100px) {
+  .ui-panel {
+    width: 90% !important;
+    max-width: 90% !important;
+  }
+  
+  #mainMenu {
+    width: 90%;
+    max-width: 500px;
+  }
+  
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .cyber-slider {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .cyber-slider label {
+    margin-bottom: 10px;
+  }
+  
+  .slider-container {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .score-container {
+    top: 10px;
+  }
+  
+  #scores {
+    font-size: 26px;
+    padding: 8px 20px;
+  }
+  
+  .btn-group {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .cyber-button {
+    width: 100%;
+  }
+  
+  .store-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .game-hud {
+    pointer-events: none;
+  }
+  
+  /* Mobile controls */
+  .mobile-controls {
+    display: flex;
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    width: 100%;
+    justify-content: space-between;
+    padding: 0 20px;
+    pointer-events: all;
+  }
+  
+  .mobile-control {
+    width: 80px;
+    height: 80px;
+    background: rgba(0, 20, 40, 0.6);
+    border: 2px solid var(--primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    color: var(--primary);
+    touch-action: manipulation;
+  }
+  
+  .mobile-control:active {
+    background: rgba(0, 252, 255, 0.2);
+    transform: scale(1.1);
+  }
+}
+
+/* Landscape mode adjustments */
+@media (max-height: 600px) and (orientation: landscape) {
+  .mobile-controls {
+    bottom: 10px;
+  }
+  
+  .mobile-control {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+  }
+}

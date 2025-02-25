@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2.5D COSMIC PONG ARENA</title>
+  
+  <!-- Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- Socket.io for multiplayer -->
+  <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
+  <!-- GSAP for animations -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+  <!-- TweenMax for advanced animations -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/2.1.3/TweenMax.min.js"></script>
+  <!-- Howler.js for sound -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+  <!-- PayPal SDK -->
+  <script src="https://www.paypal.com/sdk/js?client-id=test&currency=USD"></script>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Russo+One&display=swap" rel="stylesheet">
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/ui.css">
+  <link rel="stylesheet" href="css/game.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div id="loadingScreen">
+    <div class="loading-logo">
+      <svg width="200" height="200" viewBox="0 0 200 200">
+        <circle cx="100" cy="100" r="80" fill="none" stroke="#00fcff" stroke-width="8" stroke-dasharray="502" stroke-dashoffset="502">
+          <animate attributeName="stroke-dashoffset" from="502" to="0" dur="2s" begin="0s" fill="freeze" />
+        </circle>
+        <rect x="30" y="80" width="30" height="80" rx="5" fill="#00fcff">
+          <animate attributeName="y" from="200" to="80" dur="0.5s" begin="1s" fill="freeze" />
+        </rect>
+        <rect x="140" y="40" width="30" height="80" rx="5" fill="#ff00ff">
+          <animate attributeName="y" from="-80" to="40" dur="0.5s" begin="1.2s" fill="freeze" />
+        </rect>
+        <circle cx="100" cy="100" r="15" fill="#ffff00">
+          <animate attributeName="r" from="0" to="15" dur="0.5s" begin="1.5s" fill="freeze" />
+        </circle>
+      </svg>
+    </div>
+    <div class="loading-bar-container">
+      <div class="loading-bar" id="loadingBar"></div>
+    </div>
+    <div class="loading-text" id="loadingText">Loading Game Assets...</div>
+  </div>
+
+  <!-- Main Game Container -->
+  <div class="game-container">
+    <!-- 3D Game Canvas -->
+    <canvas id="gameCanvas"></canvas>
+    
+    <!-- UI Layer -->
+    <div class="ui-container">
+      <!-- Score display -->
+      <div class="score-container">
+        <div id="scores">
+          <div class="player-score left">0</div>
+          <div class="player-score right">0</div>
+        </div>
+      </div>
+      
+      <!-- Power-up displays -->
+      <div class="power-up-display left" id="leftPowerUps"></div>
+      <div class="power-up-display right" id="rightPowerUps"></div>
+      
+      <!-- Game mode panel -->
+      <div id="gameModePanel" class="ui-panel" style="display:none;">
+        <div class="panel-header">
+          <h2 class="panel-title">Game Mode</h2>
+          <button class="cyber-button" onclick="UI.togglePanel('gameModePanel')" style="min-width: auto; padding: 5px 10px;">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="panel-content">
+          <div class="btn-group" id="gameModeButtons">
+            <button id="ai-vs-ai" class="cyber-button active" onclick="Game.setGameMode('ai-vs-ai')">AI vs AI</button>
+            <button id="human-vs-ai" class="cyber-button" onclick="Game.setGameMode('human-vs-ai')">Human vs AI</button>
+            <button id="ai-vs-human" class="cyber-button" onclick="Game.setGameMode('ai-vs-human')">AI vs Human</button>
+            <button id="human-vs-human" class="cyber-button" onclick="Game.setGameMode('human-vs-human')">Local 2 Player</button>
+            <button id="multiplayer" class="cyber-button secondary" onclick="Game.setGameMode('multiplayer')">Online Multiplayer</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Mobile controls (only shown on mobile) -->
+      <div class="mobile-controls" id="mobileControls" style="display:none;">
+        <div class="mobile-control left-up" id="leftPaddleUp">
+          <i class="fas fa-chevron-up"></i>
+        </div>
+        <div class="mobile-control left-down" id="leftPaddleDown">
+          <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="mobile-control right-up" id="rightPaddleUp">
+          <i class="fas fa-chevron-up"></i>
+        </div>
+        <div class="mobile-control right-down" id="rightPaddleDown">
+          <i class="fas fa-chevron-down"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Main Menu -->
+  <div id="mainMenu" class="ui-panel">
+    <div class="panel-header">
+      <h2 class="panel-title">2.5D COSMIC PONG ARENA</h2>
+    </div>
+    <div class="panel-content">
+      <div class="btn-group">
+        <button class="cyber-button" onclick="Game.startGame()">PLAY GAME</button>
+        <button class="cyber-button" onclick="UI.showPanel('settingsPanel')">SETTINGS</button>
+        <button class="cyber-button secondary" onclick="UI.showPanel('multiplayerPanel')">MULTIPLAYER</button>
+        <button class="cyber-button secondary" onclick="UI.showPanel('storePanel')">STORE</button>
+        <button class="cyber-button warning" onclick="UI.showPanel('howToPlayPanel')">HOW TO PLAY</button>
+        <button class="cyber-button warning" onclick="UI.showPanel('profilePanel')">PROFILE</button>
+      </div>
+      
+      <div id="loginStatus">
+        <div id="userInfo" style="display:none; margin-bottom:10px; color:#00fcff;"></div>
+        <div class="btn-group" style="margin-top:10px;">
+          <button id="loginButton" class="cyber-button secondary" onclick="UI.showPanel('loginPanel')">LOGIN</button>
+          <button id="logoutButton" class="cyber-button warning" onclick="Store.logout()" style="display:none;">LOGOUT</button>
+        </div>
+      </div>
+      
+      <div class="controls-help">
+        <h4>Controls:</h4>
+        <p>Left Paddle: <span class="key">W</span> (up) and <span class="key">S</span> (down)</p>
+        <p>Right Paddle: <span class="key">↑</span> (up) and <span class="key">↓</span> (down)</p>
+        <p>Pause Game: <span class="key">ESC</span> or <span class="key">P</span></p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Settings Panel -->
+  <div id="settingsPanel" class="ui-panel" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:800px; max-height:80vh;">
+    <div class="panel-header">
+      <h2 class="panel-title">Game Settings</h2>
+      <button class="cyber-button" onclick="UI.hidePanel('settingsPanel')" style="min-width: auto; padding: 5px 10px;">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="panel-content">
+      <div class="settings-section">
+        <h3>Game Settings</h3>
+        <div class="settings-grid">
+          <div class="cyber-slider">
+            <label for="gameSpeed">Game Speed</label>
+            <div class="slider-container">
+              <input type="range" min="0.5" max="5" step="0.1" value="2.2" class="slider" id="gameSpeed">
+            </div>
+            <div class="slider-value" id="gameSpeedValue">2.2</div>
+          </div>
+          
+          <div class="cyber-slider">
+            <label for="baseBallSpeed">Ball Speed</label>
+            <div class="slider-container">
+              <input type="range" min="1" max="10" step="0.1" value="4" class="slider" id="baseBallSpeed">
+            </div>
+            <div class="slider-value" id="baseBallSpeedValue">4</div>
+          </div>
+          
+          <div class="cyber-slider">
+            <label for="maxPoints">Max Points</label>
+            <div class="slider-container">
+              <input type="range" min="1" max="20" step="1" value="10" class="slider" id="maxPoints">
+            </div>
+            <div class="slider-value" id="maxPointsValue">10</div>
+          </div>
+          
+          <div class="cyber-slider">
+            <label for="powerUpFrequency">Power-Up Frequency</label>
+            <div class="slider-container">
+              <input type="range" min="1000" max="10000" step="500" value="5000" class="slider" id="powerUpFrequency">
+            </div>
+            <div class="slider-value" id="powerUpFrequencyValue">5s</div>
+          </div>
+          
+          <div class="cyber-slider">
+            <label for="extraSpeedFactor">Rally Speed Factor</label>
+            <div class="slider-container">
+              <input type="range" min="0.01" max="0.2" step="0.01" value="0.05" class="slider" id="extraSpeedFactor">
+            </div>
+            <div class="slider-value" id="extraSpeedFactorValue">0.05</div>
+          </div>
+          
+          <div class="cyber-slider">
+            <label for="randomnessLevel">Randomness</label>
+            <div class="slider-container">
+              <input type="range" min="1" max="30" step="1" value="15" class="slider" id="randomnessLevel">
+            </div>
+            <div class="slider-value" id="randomnessLevelValue">15</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="settings-section">
+        <h3>AI Difficulty</h3>
+        <div class="settings-grid">
+          <div class="settings-row">
+            <label for="leftDifficulty">Left AI</label>
+            <select id="leftDifficulty">
+              <option value="easy">Easy</option>
+              <option value="normal" selected>Normal</option>
+              <option value="hard">Hard</option>
+              <option value="insane">Insane</option>
+              <option value="adaptive">Adaptive</option>
+            </select>
+          </div>
+          
+          <div class="settings-row">
+            <label for="rightDifficulty">Right AI</label>
+            <select id="rightDifficulty">
+              <option value="easy">Easy</option>
+              <option value="normal" selected>Normal</option>
+              <option value="hard">Hard</option>
+              <option value="insane">Insane</option>
+              <option value="adaptive">Adaptive</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <div class="settings-section">
+        <h3>Graphics Settings</h3>
+        <div class="settings-grid">
+          <div class="cyber-slider">
+            <label for="graphicsQuality">Quality</label>
+            <div class="slider-container">
+              <input type="range" min="0" max="2" step="1" value="1" class="slider" id="graphicsQuality">
+            </div>
+            <div class="slider-value" id="graphicsQualityValue">Medium</div>
+          </div>
+          
+          <label class="cyber-checkbox">
+            <input type="checkbox" id="enableParticles" checked>
+            <span class="checkmark"></span>
+            Particle Effects
+          </label>
+          
+          <label class="cyber-checkbox">
+            <input type="checkbox" id="enableBloom" checked>
+            <span class="checkmark"></span>
+            Bloom Effects
+          </label>
+          
+          <label class="cyber-checkbox">
+            <input type="checkbox" id="enableShadows" checked>
+            <span class="checkmark"></span>
+            Shadows
+          </label>
+        </div>
+      </div>
+      
+      <div class="settings-section">
+        <h3>Sound Settings</h3>
+        <div class="settings-grid">
+          <div class="cyber-slider">
+            <label for="masterVolume">Master Volume</label>
+            <div class="slider-container">
+              <input type="range" min="0" max="1" step="0.01" value="0.8" class="slider" id="masterVolume">
+            </div>
+            <div class="slider-value" id="masterVolumeValue">80%</div>
+          </div>
+          
+          <div class="cyber-slider">
+            <label for="sfxVolume">SFX Volume</label>
+            <div class="slider-container">
+              <input type="range" min="0" max="1" step="0.01" value="0.8" class="slider" id="sfxVolume">
+            </div>
+            <div class="slider-value" id="sfxVolumeValue">80%</div>
+          </div>
+          
+          <div class="cyber-slider">
+            <label for="musicVolume">Music Volume</label>
+            <div class="slider-container">
+              <input type="range" min="0" max="1" step="0.01" value="0.5" class="slider" id="musicVolume">
+            </div>
+            <div class="slider-value" id="musicVolumeValue">50%</div>
+          </div>
+          
+          <label class="cyber-checkbox">
+            <input type="checkbox" id="enableMusic" checked>
+            <span class="checkmark"></span>
+            Background Music
+          </label>
+        </div>
+      </div>
+      
+      <div class="btn-group">
+        <button class="cyber-button" onclick="Settings.applySettings()">Apply Settings</button>
+        <button class="cyber-button warning" onclick="Settings.resetSettings()">Reset Defaults</button>
+        <button class="cyber-button secondary" onclick="UI.showPanel('powerUpPanel')">Power-Up Settings</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Power-Up Settings Panel -->
+  <div id="powerUpPanel" class="ui-panel" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:800px; max-height:80vh;">
+    <div class="panel-header">
+      <h2 class="panel-title">Power-Up Settings</h2>
+      <button class="cyber-button" onclick="UI.hidePanel('powerUpPanel')" style="min-width: auto; padding: 5px 10px;">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="panel-content">
+      <div class="settings-section">
+        <h3>Enable/Disable Power-Ups</h3>
+        <div class="settings-grid">
+          <label class="cyber-checkbox">
+            <input type="checkbox" id="toggleSpeed" checked>
+            <span class="checkmark" style="border-color: #ffeb3b;"></span>
+            Paddle Accelerator
+          </label>
+          
+          <label class="cyber-checkbox">
+            <input type="checkbox" id="toggleBallSpeed" checked>
+            <span class="checkmark" style="border-color: #f44336;"></span>
+            Ball Blaster
+          </label>
+          
+          <label class="cyber-checkbox">
+            <input type="checkbox" id="toggleShrink" checked>
+            <span class="checkmark" style="border-color: #800080;"></span>
+            Paddle Shrinker
+          </label>
+          
+          <label class="cyber-checkbox">
+            <input type="checkbox" id="toggleShield" checked>
+            <span class="checkmark" style="border-color: #2196F3;"></span>
+            Shield
+          </label>
+          
+          <label class="cyber-checkbox">
+            <input type="checkbox" id="toggleMagnet" checked>
+            <span class="checkmark" style="border-color: #4CAF50;"></span>
+            Magnet
+          </label>
+          
+          <label class="cyber-checkbox">
+            <input type="checkbox" id="toggleGiant" checked>
+            <span class="checkmark" style="border-color: #FF9800;"></span>
+            Giant Paddle
+          </label>
+          
+          <label class="cyber-checkbox">
+            <input type="checkbox" id="toggleGhost" checked>
+            <span class="checkmark" style="border-color: #FFFFFF;"></span>
+            Ghost Ball
+          </label>
+          
+          <label class="cyber-checkbox">
+            <input type="checkbox" id="toggleMultiBall" checked>
+            <span class="checkmark" style="border-color: #00FFFF;"></span>
+            Multi-Ball
+          </label>
+          
+          <label class="cyber-checkbox">
+            <input type="checkbox" id="toggleFreeze" checked>
+            <span class="checkmark" style="border-color: #008080;"></span>
+            Freeze Opponent
+          </label>
+          
+          <label class="cyber-checkbox">
+            <input type="checkbox" id="toggleGravity" checked>
+            <span class="checkmark" style="border-color: #8000FF;"></span>
+            Gravity Well
+          </label>
+          
+          <label class="cyber-checkbox">
+            <input type="checkbox" id="toggleTimeSlow" checked>
+            <span class="checkmark" style="border-color: #00FF00;"></span>
+            Time Warp
+          </label>
+          
+          <label class="cyber-checkbox">
+            <input type="checkbox" id="toggleTeleport" checked>
+            <span class="checkmark" style="border-color: #FF00FF;"></span>
+            Ball Portal
+          </label>
+          
+          <label class="cyber-checkbox">
+            <input type="checkbox" id="toggleSuperShot" checked>
+            <span class="checkmark" style="border-color: #FF3300;"></span>
+            Super Shot
+          </label>
+          
+          <label class="cyber-checkbox">
+            <input type="checkbox" id="toggleMirror" checked>
+            <span class="checkmark" style="border-color: #AAAAAA;"></span>
+            Mirror Dimension
+          </label>
+          
+          <label class="cyber-checkbox">
+            <input type="checkbox" id="toggleObstacle" checked>
+            <span class="checkmark" style="border-color: #663300;"></span>
+            Obstacle
+          </label>
+        </div>
+      </div>
+      
+      <div class="settings-section">
+        <h3>Power-Up Chances</h3>
+        <div class="settings-grid">
+          <div class="cyber-slider">
+            <label for="speedChance">Speed Chance</label>
+            <div class="slider-container">
+              <input type="range" min="0" max="100" step="1" value="10" class="slider" id="speedChance">
+            </div>
+            <div class="slider-value" id="speedChanceValue">10%</div>
+          </div>
+          
+          <div class="cyber-slider">
+            <label for="ballSpeedChance">Ball Speed</label>
+            <div class="slider-container">
+              <input type="range" min="0" max="100" step="1" value="10" class="slider" id="ballSpeedChance">
+            </div>
+            <div class="slider-value" id="ballSpeedChanceValue">10%</div>
+          </div>
+          
+          <!-- Add all other power-up chance sliders here -->
+        </div>
+      </div>
+      
+      <div class="settings-section">
+        <h3>Power-Up Duration</h3>
+        <div class="settings-grid">
+          <div class="cyber-slider">
+            <label for="powerUpDurationFactor">Duration Multiplier</label>
+            <div class="slider-container">
+              <input type="range" min="0.5" max="2" step="0.1" value="1" class="slider" id="powerUpDurationFactor">
+            </div>
+            <div class="slider-value" id="powerUpDurationFactorValue">1.0x</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="settings-section">
+        <h3>Power-Up Strength</h3>
+        <div class="settings-grid">
+          <div class="cyber-slider">
+            <label for="powerUpStrengthFactor">Strength Multiplier</label>
+            <div class="slider-container">
+              <input type="range" min="0.5" max="2" step="0.1" value="1" class="slider" id="powerUpStrengthFactor">
+            </div>
+            <div class="slider-value" id="powerUpStrengthFactorValue">1.0x</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="btn-group">
+        <button class="cyber-button" onclick="Settings.applyPowerUpSettings()">Apply Settings</button>
+        <button class="cyber-button warning" onclick="Settings.resetPowerUpSettings()">Reset Defaults</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Multiplayer Panel -->
+  <div id="multiplayerPanel" class="ui-panel" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:800px; max-height:80vh;">
+    <div class="panel-header">
+      <h2 class="panel-title">Multiplayer</h2>
+      <button class="cyber-button" onclick="UI.hidePanel('multiplayerPanel')" style="min-width: auto; padding: 5px 10px;">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="panel-content">
+      <div class="settings-section">
+        <h3>Player Profile</h3>
+        <div class="settings-row">
+          <label for="playerName">Player Name:</label>
+          <input type="text" id="playerName" value="Player" style="width: 200px;">
+        </div>
+        
+        <div class="settings-row">
+          <label for="playerAvatar">Avatar Color:</label>
+          <select id="playerAvatar">
+            <option value="cyan">Cyan</option>
+            <option value="magenta">Magenta</option>
+            <option value="yellow">Yellow</option>
+            <option value="green">Green</option>
+            <option value="red">Red</option>
+            <option value="blue">Blue</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="settings-section">
+        <h3>Online Players</h3>
+        <div class="player-list" id="onlinePlayers">
+          <div class="player-item">
+            <div class="player-avatar" style="background:var(--primary);">P</div>
+            <div class="player-info">
+              <div class="player-name">PlayerOne</div>
+              <div class="player-status">Online - Waiting for match</div>
+            </div>
+            <div class="player-stats">
+              <div class="player-stat"><i class="fas fa-trophy"></i> 15</div>
+              <div class="player-stat"><i class="fas fa-gamepad"></i> 42</div>
+            </div>
+            <button class="cyber-button" style="min-width: auto; padding: 8px 15px;">Challenge</button>
+          </div>
+          
+          <div class="player-item">
+            <div class="player-avatar" style="background:var(--secondary);">G</div>
+            <div class="player-info">
+              <div class="player-name">GamerXYZ</div>
+              <div class="player-status">In Game</div>
+            </div>
+            <div class="player-stats">
+              <div class="player-stat"><i class="fas fa-trophy"></i> 28</div>
+              <div class="player-stat"><i class="fas fa-gamepad"></i> 65</div>
+            </div>
+            <button class="cyber-button" style="min-width: auto; padding: 8px 15px;" disabled>Challenge</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="btn-group">
+        <button class="cyber-button secondary" onclick="Multiplayer.findMatch()">Quick Match</button>
+        <button class="cyber-button secondary" onclick="Multiplayer.hostPrivateGame()">Host Private Game</button>
+        <button class="cyber-button secondary" onclick="Multiplayer.joinPrivateGame()">Join Private Game</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Store Panel -->
+  <div id="storePanel" class="ui-panel" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:800px; max-height:80vh;">
+    <div class="panel-header">
+      <h2 class="panel-title">Cosmic Pong Store</h2>
+      <button class="cyber-button" onclick="UI.hidePanel('storePanel')" style="min-width: auto; padding: 5px 10px;">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="panel-content">
+      <div class="settings-section">
+        <h3>Your Credits: <span id="playerCredits">1000</span> <i class="fas fa-gem" style="color:var(--tertiary);"></i></h3>
+        
+        <div id="store-login-message" style="color:#ffcc00; text-align:center; margin-bottom:20px; display:none;">
+          <i class="fas fa-exclamation-triangle"></i> Please log in to make purchases
+        </div>
+        
+        <div class="store-grid">
+          <div class="store-item">
+            <div class="store-item-image">
+              <i class="fas fa-palette" style="font-size: 48px; color: var(--tertiary);"></i>
+            </div>
+            <h3 class="store-item-title">Neon Paddle Pack</h3>
+            <p class="store-item-description">Customize your paddle with glowing neon colors and effects.</p>
+            <div class="store-item-price"><i class="fas fa-gem" class="currency-icon"></i> 200</div>
+            <button class="cyber-button" onclick="Store.purchaseItem('neon_paddle_pack')">Purchase</button>
+          </div>
+          
+          <div class="store-item">
+            <div class="store-item-image">
+              <i class="fas fa-meteor" style="font-size: 48px; color: var(--secondary);"></i>
+            </div>
+            <h3 class="store-item-title">Cosmic Ball Skins</h3>
+            <p class="store-item-description">Transform your ball into a miniature planet, star, or asteroid.</p>
+            <div class="store-item-price"><i class="fas fa-gem" class="currency-icon"></i> 300</div>
+            <button class="cyber-button" onclick="Store.purchaseItem('cosmic_ball_skins')">Purchase</button>
+          </div>
+          
+          <div class="store-item">
+            <div class="store-item-image">
+              <i class="fas fa-magic" style="font-size: 48px; color: var(--primary);"></i>
+            </div>
+            <h3 class="store-item-title">Premium Power-Ups</h3>
+            <p class="store-item-description">Unlock 5 exclusive power-ups only available to premium players.</p>
+            <div class="store-item-price"><i class="fas fa-gem" class="currency-icon"></i> 500</div>
+            <button class="cyber-button" onclick="Store.purchaseItem('premium_powerups')">Purchase</button>
+          </div>
+          
+          <div class="store-item">
+            <div class="store-item-image">
+              <i class="fas fa-vr-cardboard" style="font-size: 48px; color: #FF9800;"></i>
+            </div>
+            <h3 class="store-item-title">Arena Themes</h3>
+            <p class="store-item-description">Play in new environments: Space Station, Cyberpunk City, and more.</p>
+            <div class="store-item-price"><i class="fas fa-gem" class="currency-icon"></i> 450</div>
+            <button class="cyber-button" onclick="Store.purchaseItem('arena_themes')">Purchase</button>
+          </div>
+          
+          <div class="store-item">
+            <div class="store-item-image">
+              <i class="fas fa-bolt" style="font-size: 48px; color: #ffcc00;"></i>
+            </div>
+            <h3 class="store-item-title">Power Paddle</h3>
+            <p class="store-item-description">Super-charged paddle with improved response and hit power.</p>
+            <div class="store-item-price"><i class="fas fa-gem" class="currency-icon"></i> 250</div>
+            <button class="cyber-button" onclick="Store.purchaseItem('power_paddle')">Purchase</button>
+          </div>
+          
+          <div class="store-item">
+            <div class="store-item-image">
+              <i class="fas fa-shield-alt" style="font-size: 48px; color: #3399ff;"></i>
+            </div>
+            <h3 class="store-item-title">Shield Generator</h3>
+            <p class="store-item-description">Start each game with an active shield power-up.</p>
+            <div class="store-item-price"><i class="fas fa-gem" class="currency-icon"></i> 350</div>
+            <button class="cyber-button" onclick="Store.purchaseItem('shield_generator')">Purchase</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="settings-section">
+        <h3>Credits Packs</h3>
+        <div class="store-grid">
+          <div class="store-item">
+            <div class="store-item-image">
+              <i class="fas fa-gem" style="font-size: 48px; color: var(--tertiary);"></i>
+            </div>
+            <h3 class="store-item-title">500 Credits</h3>
+            <p class="store-item-description">Get 500 credits to spend on customizations and power-ups.</p>
+            <div class="store-item-price">$4.99 USD</div>
+            <div id="paypal-500-container"></div>
+          </div>
+          
+          <div class="store-item">
+            <div class="store-item-image">
+              <i class="fas fa-gem" style="font-size: 48px; color: var(--tertiary);"></i>
+              <i class="fas fa-gem" style="font-size: 48px; color: var(--tertiary); margin-left: -20px;"></i>
+            </div>
+            <h3 class="store-item-title">1200 Credits</h3>
+            <p class="store-item-description">Get 1200 credits (20% bonus) to spend in the store.</p>
+            <div class="store-item-price">$9.99 USD</div>
+            <div id="paypal-1200-container"></div>
+          </div>
+          
+          <div class="store-item">
+            <div class="store-item-image">
+              <i class="fas fa-gem" style="font-size: 48px; color: var(--tertiary);"></i>
+              <i class="fas fa-gem" style="font-size: 48px; color: var(--tertiary); margin-left: -20px;"></i>
+              <i class="fas fa-gem" style="font-size: 48px; color: var(--tertiary); margin-left: -20px;"></i>
+            </div>
+            <h3 class="store-item-title">3000 Credits</h3>
+            <p class="store-item-description">Get 3000 credits (50% bonus) to spend in the store.</p>
+            <div class="store-item-price">$19.99 USD</div>
+            <div id="paypal-3000-container"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- How To Play Panel -->
+  <div id="howToPlayPanel" class="ui-panel" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:800px; max-height:80vh;">
+    <div class="panel-header">
+      <h2 class="panel-title">How To Play</h2>
+      <button class="cyber-button" onclick="UI.hidePanel('howToPlayPanel')" style="min-width: auto; padding: 5px 10px;">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="panel-content">
+      <div class="settings-section">
+        <h3>Basic Controls</h3>
+        <p>Move your paddle to hit the ball and prevent it from passing your side of the arena.</p>
+        <div class="controls-help">
+          <p>Left Paddle: <span class="key">W</span> (up) and <span class="key">S</span> (down)</p>
+          <p>Right Paddle: <span class="key">↑</span> (up) and <span class="key">↓</span> (down)</p>
+          <p>Pause Game: <span class="key">ESC</span> or <span class="key">P</span></p>
+        </div>
+      </div>
+      
+      <div class="settings-section">
+        <h3>Power-Ups</h3>
+        <p>Collect power-ups that appear in the arena to gain advantages or hinder your opponent:</p>
+        <ul style="list-style-type: none; padding: 0;">
+          <li><i class="fas fa-bolt" style="color: #ffeb3b; margin-right: 10px;"></i> <strong>Paddle Accelerator:</strong> Increases your paddle's movement speed</li>
+          <li><i class="fas fa-fire" style="color: #f44336; margin-right: 10px;"></i> <strong>Ball Blaster:</strong> Increases the ball speed when it's on your opponent's side</li>
+          <li><i class="fas fa-compress-arrows-alt" style="color: #800080; margin-right: 10px;"></i> <strong>Paddle Shrinker:</strong> Shrinks your opponent's paddle</li>
+          <li><i class="fas fa-shield-alt" style="color: #2196F3; margin-right: 10px;"></i> <strong>Shield:</strong> Protects your goal once</li>
+          <li><i class="fas fa-magnet" style="color: #4CAF50; margin-right: 10px;"></i> <strong>Magnet:</strong> Attracts the ball slightly toward your paddle</li>
+          <li><i class="fas fa-expand-arrows-alt" style="color: #FF9800; margin-right: 10px;"></i> <strong>Giant Paddle:</strong> Increases your paddle size</li>
+          <li><i class="fas fa-ghost" style="color: #FFFFFF; margin-right: 10px;"></i> <strong>Ghost Ball:</strong> Makes the ball semi-transparent and harder to track</li>
+          <li><i class="fas fa-clone" style="color: #00FFFF; margin-right: 10px;"></i> <strong>Multi-Ball:</strong> Adds an extra ball to the game</li>
+          <li><i class="fas fa-snowflake" style="color: #008080; margin-right: 10px;"></i> <strong>Freeze:</strong> Temporarily freezes your opponent's paddle</li>
+          <li><i class="fas fa-atom" style="color: #8000FF; margin-right: 10px;"></i> <strong>Gravity Well:</strong> Creates a gravity field that affects ball trajectory</li>
+        </ul>
+      </div>
+      
+      <div class="settings-section">
+        <h3>Game Modes</h3>
+        <p><strong>AI vs AI:</strong> Watch two AI players compete against each other</p>
+        <p><strong>Human vs AI:</strong> Play against the computer</p>
+        <p><strong>Human vs Human:</strong> Play against a friend on the same device</p>
+        <p><strong>Online Multiplayer:</strong> Challenge players from around the world</p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Profile Panel -->
+  <div id="profilePanel" class="ui-panel" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:600px; max-height:80vh;">
+    <div class="panel-header">
+      <h2 class="panel-title">Player Profile</h2>
+      <button class="cyber-button" onclick="UI.hidePanel('profilePanel')" style="min-width: auto; padding: 5px 10px;">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="panel-content">
+      <div class="settings-section">
+        <h3>Personal Information</h3>
+        <div class="settings-row">
+          <label for="playerName">Player Name:</label>
+          <input type="text" id="playerName" value="Player" style="width: 200px;">
+        </div>
+        
+        <div class="settings-row">
+          <label for="playerAvatar">Avatar Color:</label>
+          <select id="playerAvatar">
+            <option value="cyan">Cyan</option>
+            <option value="magenta">Magenta</option>
+            <option value="yellow">Yellow</option>
+            <option value="green">Green</option>
+            <option value="red">Red</option>
+            <option value="blue">Blue</option>
+          </select>
+        </div>
+        
+        <div class="settings-row">
+          <label for="paypalEmail">PayPal Email:</label>
+          <input type="email" id="paypalEmail" value="example@youremail.com" style="width: 250px;">
+        </div>
+      </div>
+      
+      <div class="settings-section">
+        <h3>Game Statistics</h3>
+        <div class="settings-row">
+          <label>Total Games Played:</label>
+          <span>25</span>
+        </div>
+        
+        <div class="settings-row">
+          <label>Games Won:</label>
+          <span>18</span>
+        </div>
+        
+        <div class="settings-row">
+          <label>Current Win Streak:</label>
+          <span>3</span>
+        </div>
+        
+        <div class="settings-row">
+          <label>Average Rally Length:</label>
+          <span>12.5</span>
+        </div>
+      </div>
+      
+      <div class="btn-group">
+        <button class="cyber-button" onclick="Store.updateProfile()">Save Profile</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Login Panel -->
+  <div id="loginPanel" class="ui-panel" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:400px; max-height:80vh;">
+    <div class="panel-header">
+      <h2 class="panel-title">Login</h2>
+      <button class="cyber-button" onclick="UI.hidePanel('loginPanel')" style="min-width: auto; padding: 5px 10px;">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="panel-content">
+      <div class="settings-section">
+        <div class="settings-row">
+          <label for="loginEmail">Email:</label>
+          <input type="email" id="loginEmail" style="width: 100%;">
+        </div>
+        
+        <div class="settings-row">
+          <label for="loginPassword">Password:</label>
+          <input type="password" id="loginPassword" style="width: 100%;">
+        </div>
+      </div>
+      
+      <div class="btn-group">
+        <button class="cyber-button" onclick="Store.login(document.getElementById('loginEmail').value, document.getElementById('loginPassword').value)">Login</button>
+        <button class="cyber-button secondary" onclick="UI.hidePanel('loginPanel'); UI.showPanel('registerPanel')">Register</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Register Panel -->
+  <div id="registerPanel" class="ui-panel" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:400px; max-height:80vh;">
+    <div class="panel-header">
+      <h2 class="panel-title">Create Account</h2>
+      <button class="cyber-button" onclick="UI.hidePanel('registerPanel')" style="min-width: auto; padding: 5px 10px;">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="panel-content">
+      <div class="settings-section">
+        <div class="settings-row">
+          <label for="registerName">Player Name:</label>
+          <input type="text" id="registerName" style="width: 100%;">
+        </div>
+        
+        <div class="settings-row">
+          <label for="registerEmail">Email:</label>
+          <input type="email" id="registerEmail" style="width: 100%;">
+        </div>
+        
+        <div class="settings-row">
+          <label for="registerPassword">Password:</label>
+          <input type="password" id="registerPassword" style="width: 100%;">
+        </div>
+        
+        <div class="settings-row">
+          <label for="registerConfirmPassword">Confirm Password:</label>
+          <input type="password" id="registerConfirmPassword" style="width: 100%;">
+        </div>
+      </div>
+      
+      <div class="btn-group">
+        <button class="cyber-button" onclick="Store.register(document.getElementById('registerEmail').value, document.getElementById('registerPassword').value, document.getElementById('registerName').value)">Create Account</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Container -->
+  <div class="notification-container" id="notificationContainer"></div>
+
+  <!-- JavaScript files -->
+  <script src="js/constants.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/powerups.js"></script>
+  <script src="js/physics.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/multiplayer.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/deployment.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
