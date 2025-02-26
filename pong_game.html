@@ -1,0 +1,3264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EXTREME PONG</title>
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Russo+One&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary: #00fcff;
+      --primary-dark: #0083b0;
+      --secondary: #ff00ff;
+      --tertiary: #ffff00;
+      --background: #0f0f2a;
+      --text: #ffffff;
+      --panel: rgba(0, 20, 40, 0.85);
+      --accent: #ff00ff;
+      --success: #00ff66;
+      --warning: #ffcc00;
+      --danger: #ff3366;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Orbitron', 'Segoe UI', Arial, sans-serif;
+      color: var(--text);
+      background-color: var(--background);
+      overflow: hidden;
+      touch-action: manipulation;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    
+    #game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+    }
+    
+    #background-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    
+    #game-canvas {
+      position: relative;
+      border: 3px solid var(--primary);
+      border-radius: 5px;
+      box-shadow: 0 0 20px rgba(0, 252, 255, 0.5);
+      z-index: 2;
+      background-color: rgba(0, 0, 30, 0.6);
+      width: 85vw; /* Wider on desktop */
+      height: auto;
+      aspect-ratio: 4/3; /* Fixed aspect ratio */
+      max-width: 1200px;
+      max-height: 80vh;
+    }
+    
+    #ui-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 3;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .title {
+      color: var(--primary);
+      text-shadow: 0 0 10px var(--primary);
+      font-size: 2.5rem;
+      margin: 1rem 0;
+    }
+    
+    #score-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 10px 0;
+      pointer-events: none;
+    }
+    
+    #score-box {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: rgba(0, 10, 30, 0.7);
+      border: 2px solid var(--primary);
+      border-radius: 15px;
+      padding: 10px 30px;
+      box-shadow: 0 0 20px rgba(0, 252, 255, 0.5);
+      min-width: 250px;
+      gap: 20px;
+    }
+    
+    .score {
+      font-size: 36px;
+      font-weight: 900;
+      font-family: 'Russo One', sans-serif;
+      text-shadow: 0 0 15px var(--primary);
+      min-width: 60px;
+      text-align: center;
+      padding: 0 20px;
+    }
+    
+    #left-score {
+      color: var(--primary);
+    }
+    
+    #right-score {
+      color: var(--secondary);
+    }
+    
+    #controls {
+      position: fixed;
+      bottom: 20px;
+      left: 0;
+      right: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      pointer-events: none;
+    }
+    
+    .button-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    
+    button {
+      pointer-events: auto;
+      background: rgba(0, 10, 30, 0.7);
+      color: var(--text);
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      padding: 12px 24px;
+      min-width: 120px;
+      border: 2px solid var(--primary);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 0 10px rgba(0, 252, 255, 0.5);
+      text-transform: uppercase;
+    }
+    
+    button:hover {
+      background: var(--primary);
+      color: var(--background);
+    }
+    
+    button.active {
+      background: var(--primary);
+      color: var(--background);
+      box-shadow: 0 0 15px var(--primary);
+    }
+    
+    .controls-help {
+      color: var(--text);
+      text-align: center;
+      margin-top: 10px;
+      pointer-events: none;
+      font-size: 14px;
+      text-shadow: 0 0 5px rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 30, 0.5);
+      padding: 8px;
+      border-radius: 8px;
+    }
+    
+    .settings-panel {
+      background: rgba(0, 10, 30, 0.8);
+      border: 2px solid var(--primary);
+      border-radius: 10px;
+      padding: 15px;
+      margin: 10px 0;
+      width: 100%;
+      max-width: 500px;
+      pointer-events: auto;
+      box-shadow: 0 0 15px rgba(0, 252, 255, 0.3);
+    }
+    
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    
+    .settings-panel label {
+      color: var(--text);
+      margin: 5px 10px;
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+    }
+    
+    .settings-panel input, .settings-panel select {
+      background: rgba(0, 0, 20, 0.5);
+      border: 1px solid var(--primary);
+      border-radius: 4px;
+      color: var(--text);
+      padding: 5px;
+      margin-left: 8px;
+      font-family: 'Orbitron', sans-serif;
+    }
+    
+    .settings-panel input[type="range"] {
+      width: 100px;
+    }
+    
+    .settings-panel input[type="number"] {
+      width: 50px;
+    }
+    
+    .settings-btn {
+      background: rgba(0, 10, 30, 0.7);
+      color: var(--text);
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 8px 16px;
+      border: 2px solid var(--primary);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-transform: uppercase;
+    }
+    
+    .settings-btn:hover {
+      background: var(--primary);
+      color: var(--background);
+    }
+    
+    .small-btn {
+      padding: 5px 10px;
+      font-size: 12px;
+    }
+    
+    #matchmaking-status {
+      min-height: 60px;
+      background: rgba(0, 0, 20, 0.3);
+      border-radius: 8px;
+      padding: 10px;
+      margin: 10px 0;
+    }
+    
+    .key {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 252, 255, 0.1);
+      border: 1px solid var(--primary);
+      padding: 5px;
+      border-radius: 6px;
+      margin: 0 5px;
+      min-width: 24px;
+      height: 24px;
+      box-shadow: 0 0 5px rgba(0, 252, 255, 0.3);
+      font-weight: bold;
+    }
+    
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(0, 20, 40, 0.9);
+      border-left: 4px solid var(--primary);
+      padding: 15px 20px;
+      border-radius: 6px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      z-index: 1000;
+      animation: slideIn 0.3s forwards, fadeOut 0.5s forwards 2.5s;
+      max-width: 300px;
+      pointer-events: none;
+    }
+    
+    .game-message {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 20, 40, 0.85);
+      padding: 20px 40px;
+      border-radius: 10px;
+      border: 2px solid var(--primary);
+      box-shadow: 0 0 20px rgba(0, 252, 255, 0.5);
+      text-align: center;
+      pointer-events: none;
+    }
+    
+    .game-message h2 {
+      font-size: 32px;
+      margin-bottom: 15px;
+      color: var(--primary);
+      text-shadow: 0 0 10px var(--primary);
+    }
+    
+    .game-message p {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+    
+    /* Touch controls for mobile */
+    #mobile-controls {
+      position: fixed;
+      bottom: 150px;
+      left: 0;
+      right: 0;
+      display: none; /* Initially hidden, shown on mobile */
+      justify-content: space-between;
+      padding: 0 20px;
+      pointer-events: none;
+    }
+    
+    .paddle-control {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    
+    .control-button {
+      pointer-events: auto;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: rgba(0, 10, 30, 0.5);
+      border: 2px solid var(--primary);
+      color: var(--text);
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    #left-controls .control-button {
+      border-color: var(--primary);
+    }
+    
+    #right-controls .control-button {
+      border-color: var(--secondary);
+    }
+    
+    /* Power-up indicators */
+    .power-up-indicators {
+      position: absolute;
+      top: 20px;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 30px;
+      pointer-events: none;
+    }
+    
+    .power-up-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      max-width: 150px;
+      margin-top: 40px; /* Move power-ups down from the corner */
+    }
+    
+    .power-up-item {
+      background: rgba(0, 10, 30, 0.7);
+      border-radius: 15px;
+      padding: 5px 10px;
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+      box-shadow: 0 0 8px rgba(0, 252, 255, 0.5);
+      backdrop-filter: blur(2px);
+    }
+    
+    .power-up-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      margin-right: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      box-shadow: 0 0 5px currentColor;
+    }
+    
+    /* Enhanced animated rally counter */
+    .rally-counter {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px;
+      font-weight: bold;
+      color: var(--tertiary);
+      text-shadow: 0 0 10px var(--tertiary);
+      pointer-events: none;
+      text-align: center;
+      transition: all 0.2s ease-out;
+      opacity: 0.85;
+      padding: 10px 20px;
+      border-radius: 10px;
+      background: rgba(0, 0, 20, 0.3);
+      backdrop-filter: blur(4px);
+      z-index: 10;
+    }
+    
+    .rally-count {
+      font-size: 32px;
+      margin-top: 5px;
+      font-family: 'Russo One', sans-serif;
+      display: block;
+    }
+    
+    /* New Rally Counter - Completely Redesigned */
+    @keyframes rallyPulse {
+      0% { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+      50% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+    }
+    
+    @keyframes rallyBounce {
+      0% { transform: translate(-50%, -50%) scale(0.8); }
+      20% { transform: translate(-50%, -50%) scale(1.2); }
+      40% { transform: translate(-50%, -50%) scale(0.9); }
+      60% { transform: translate(-50%, -50%) scale(1.1); }
+      80% { transform: translate(-50%, -50%) scale(0.95); }
+      100% { transform: translate(-50%, -50%) scale(1); }
+    }
+    
+    @keyframes rallyRotate {
+      0% { transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+      25% { transform: translate(-50%, -50%) rotate(-3deg) scale(1.05); }
+      75% { transform: translate(-50%, -50%) rotate(3deg) scale(1.05); }
+      100% { transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+    }
+    
+    @keyframes rallyGlowNew {
+      0% { text-shadow: 0 0 5px currentColor, 0 0 10px currentColor; }
+      50% { text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor; }
+      100% { text-shadow: 0 0 5px currentColor, 0 0 10px currentColor; }
+    }
+    
+    @keyframes rallyAppear {
+      0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+      100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    }
+    
+    @keyframes rallyDisappear {
+      0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    }
+    
+    /* Classes for different rally levels - New Design */
+    .rally-level-new {
+      animation: rallyAppear 0.3s ease-out forwards;
+      padding: 10px 20px;
+      border-radius: 10px;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      box-shadow: 0 0 15px rgba(0,0,0,0.7);
+      text-align: center;
+    }
+    
+    .rally-level-1 {
+      color: #ffff88;
+      animation: rallyPulse 2s infinite;
+    }
+    
+    .rally-level-2 {
+      color: #ffcc22;
+      animation: rallyPulse 1.5s infinite, rallyGlowNew 2s infinite;
+    }
+    
+    .rally-level-3 {
+      color: #ff9900;
+      animation: rallyRotate 1s infinite, rallyGlowNew 1.5s infinite;
+    }
+    
+    .rally-level-4 {
+      color: #ff6600;
+      animation: rallyRotate 0.8s infinite, rallyGlowNew 1s infinite;
+      font-weight: 900;
+    }
+    
+    .rally-level-5 {
+      color: #ff3300;
+      animation: rallyRotate 0.6s infinite, rallyGlowNew 0.8s infinite;
+      font-weight: 900;
+      font-size: 110%;
+      border: 2px solid #ff3300;
+    }
+    
+    @keyframes slideIn {
+      from { transform: translateX(110%); }
+      to { transform: translateX(0); }
+    }
+    
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; visibility: hidden; }
+    }
+    
+    /* Floating score animation styles */
+    .floating-score {
+      position: absolute;
+      font-family: 'Russo One', sans-serif;
+      font-size: 36px;
+      font-weight: bold;
+      text-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 10;
+    }
+    
+    /* Winner text animation styles */
+    .winner-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 100;
+      pointer-events: none;
+      animation: winnerPulse 0.5s infinite alternate;
+    }
+    
+    .winner-title {
+      font-family: 'Russo One', sans-serif;
+      font-size: 60px;
+      font-weight: bold;
+      text-shadow: 0 0 20px currentColor, 0 0 40px currentColor;
+      margin-bottom: 10px;
+      animation: winnerGlow 1s infinite alternate;
+    }
+    
+    .winner-subtitle {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 32px;
+      color: #ffffff;
+      text-shadow: 0 0 10px rgba(255,255,255,0.7);
+    }
+    
+    @keyframes winnerPulse {
+      from { transform: translate(-50%, -50%) scale(1); }
+      to { transform: translate(-50%, -50%) scale(1.05); }
+    }
+    
+    @keyframes winnerGlow {
+      from { text-shadow: 0 0 20px currentColor, 0 0 40px currentColor; }
+      to { text-shadow: 0 0 30px currentColor, 0 0 60px currentColor, 0 0 80px currentColor; }
+    }
+    
+    /* Media Queries for responsiveness */
+    @media (max-width: 768px) {
+      .title {
+        font-size: 1.5rem;
+        margin: 0.5rem 0;
+      }
+      
+      #game-canvas {
+        width: 95vw;
+        height: auto;
+        aspect-ratio: 1/1; /* Square canvas on mobile for better gameplay */
+        max-height: 65vh;
+        max-width: none;
+        border-width: 2px;
+      }
+      
+      #controls {
+        bottom: 2px;
+        gap: 3px;
+        transform: scale(0.9);
+      }
+      
+      .button-row {
+        gap: 3px;
+      }
+      
+      button {
+        padding: 6px 10px;
+        font-size: 11px;
+        min-width: 70px;
+      }
+      
+      .controls-help {
+        display: none; /* Hide keyboard controls on mobile */
+      }
+      
+      #mobile-controls {
+        display: flex;
+        bottom: 65px; /* Position higher to avoid overlap */
+        transform: scale(0.85);
+        left: -20px; /* Adjust position to avoid right edge overlap */
+      }
+      
+      .control-button {
+        width: 45px; /* Smaller controls */
+        height: 45px;
+        font-size: 16px;
+      }
+      
+      #score-box {
+        min-width: 120px;
+        padding: 3px 10px;
+        transform: scale(0.9);
+      }
+      
+      .score {
+        font-size: 24px;
+        padding: 0 8px;
+        min-width: 40px;
+      }
+      
+      .settings-panel {
+        padding: 6px;
+        width: 95%;
+        max-width: none;
+        transform: scale(0.9);
+      }
+      
+      .settings-panel label {
+        font-size: 11px;
+        margin: 2px 3px;
+      }
+      
+      .settings-panel input[type="range"] {
+        width: 60px;
+      }
+      
+      .settings-panel select {
+        max-width: 100px;
+        font-size: 11px;
+      }
+      
+      .settings-btn {
+        padding: 5px 10px;
+        font-size: 11px;
+      }
+      
+      .waiting-message {
+        width: 80%;
+        padding: 8px;
+        transform: scale(0.9);
+      }
+      
+      .power-up-indicators {
+        transform: scale(0.8);
+        top: 10px;
+      }
+      
+      .power-up-group {
+        max-width: 120px;
+      }
+      
+      #back-button-container {
+        transform: scale(0.85);
+        top: 5px;
+        right: 5px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="background-canvas"></canvas>
+    <canvas id="game-canvas" width="800" height="600"></canvas>
+    
+    <div id="ui-container">
+      <h1 class="title">EXTREME PONG</h1>
+      
+      <div id="score-container">
+        <div id="score-box">
+          <div id="left-score" class="score">0</div>
+          <div style="color: rgba(255,255,255,0.5); font-size: 24px;">:</div>
+          <div id="right-score" class="score">0</div>
+        </div>
+      </div>
+      
+      <div id="controls">
+        <div class="button-row">
+          <button id="start-button">START</button>
+          <button id="reset-button">RESET</button>
+          <button id="pause-button">PAUSE</button>
+        </div>
+        
+        <div class="button-row" id="game-mode-buttons">
+          <button id="offline-mode">Offline Play</button>
+          <button id="online-mode">Online Play</button>
+          <button id="quit-button" style="display: none;" onclick="window.location.href='index.html'">Back to Home</button>
+          <button id="share-code" style="display: none;"><i class="fas fa-share-alt"></i> Share Code</button>
+        </div>
+        
+        <div id="settings-panel" class="settings-panel" style="display: none;">
+          <div class="settings-row">
+            <label>Max Score: 
+              <input type="number" id="max-score-setting" min="1" max="99" value="10">
+            </label>
+            <label>Game Speed: 
+              <input type="range" id="game-speed-setting" min="0.5" max="2" step="0.1" value="1">
+            </label>
+          </div>
+          <div class="settings-row">
+            <label>Power-ups: 
+              <select id="powerup-frequency">
+                <option value="0">None</option>
+                <option value="8000">Low</option>
+                <option value="5000" selected>Normal</option>
+                <option value="3000">High</option>
+              </select>
+            </label>
+            <label>AI Difficulty: 
+              <select id="ai-difficulty">
+                <option value="easy">Easy</option>
+                <option value="normal" selected>Normal</option>
+                <option value="hard">Hard</option>
+                <option value="insane">Insane</option>
+              </select>
+            </label>
+          </div>
+          <div class="settings-row">
+            <div style="display: flex; justify-content: space-between; width: 100%;">
+              <div>
+                <label style="margin-right: 20px;">Game Mode:</label>
+                <select id="game-type-setting">
+                  <option value="human-vs-ai" selected>Human vs AI</option>
+                  <option value="ai-vs-ai">AI vs AI</option>
+                </select>
+              </div>
+              <div>
+                <button id="settings-apply" class="settings-btn">Apply</button>
+                <button id="settings-default" class="settings-btn">Reset</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div id="matchmaking-panel" class="settings-panel" style="display: none;">
+          <div class="settings-row">
+            <div id="room-code-container" style="display: none;">
+              <label>Room Code: <span id="room-code" style="font-weight: bold; color: var(--tertiary);"></span></label>
+              <button id="copy-code" class="settings-btn small-btn"><i class="fas fa-copy"></i> Copy</button>
+            </div>
+            <div id="join-room-container">
+              <label>Join with Code: 
+                <input type="text" id="join-code" placeholder="Enter code" maxlength="6" onclick="event.stopPropagation();" onkeydown="event.stopPropagation();">
+              </label>
+              <button id="join-room" class="settings-btn small-btn">Join</button>
+            </div>
+          </div>
+          <div class="settings-row" id="matchmaking-status">
+            <div style="text-align: center; width: 100%;">
+              <span id="status-message">Click "Quick Match" to find an opponent</span>
+              <div id="loading-spinner" style="display: none; margin: 10px auto; width: 30px; height: 30px;" class="loading-spinner"></div>
+            </div>
+          </div>
+          <div class="settings-row">
+            <button id="quick-match" class="settings-btn">Quick Match</button>
+            <button id="create-room" class="settings-btn">Create Room</button>
+            <button id="cancel-matchmaking" class="settings-btn" style="display: none;">Cancel</button>
+          </div>
+        </div>
+        
+        <div class="controls-help" id="controls-help" style="margin-bottom: 5px;">
+          <div>Controls: <span class="key">W</span> <span class="key">S</span> to move | <span class="key">P</span> to pause</div>
+        </div>
+      </div>
+      
+      <div id="mobile-controls">
+        <div id="left-controls" class="paddle-control">
+          <div class="control-button" id="left-up"><i class="fas fa-chevron-up"></i></div>
+          <div class="control-button" id="left-down"><i class="fas fa-chevron-down"></i></div>
+        </div>
+      </div>
+      
+      <div id="back-button-container" style="position: fixed; top: 10px; right: 10px; z-index: 999; display: none; pointer-events: auto;">
+        <button id="back-button" class="settings-btn" onclick="window.location.href='index.html'"><i class="fas fa-home"></i> Home</button>
+      </div>
+      
+      <div class="power-up-indicators">
+        <div id="left-power-ups" class="power-up-group"></div>
+        <div id="right-power-ups" class="power-up-group"></div>
+      </div>
+      
+      <div id="rally-counter" class="rally-counter"></div>
+    </div>
+  </div>
+
+  <script>
+    // ----- Canvas and Context Setup -----
+    const bgCanvas = document.getElementById('background-canvas');
+    const bgCtx = bgCanvas.getContext('2d');
+    
+    const gameCanvas = document.getElementById('game-canvas');
+    const ctx = gameCanvas.getContext('2d');
+    
+    // Resize the background canvas to match window size
+    function resizeCanvas() {
+      bgCanvas.width = window.innerWidth;
+      bgCanvas.height = window.innerHeight;
+    }
+    
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    
+    // ----- Game Constants -----
+    const PADDLE_WIDTH = 15;
+    const PADDLE_HEIGHT = 100;
+    const BALL_RADIUS = 10;
+    const POWERUP_SIZE = 20;
+    
+    // ----- Game State Variables -----
+    let gameState = 'start'; // start, playing, paused, gameOver, finished, waiting
+    
+    // Game settings with defaults
+    const Settings = {
+      maxPoints: 10,          // Maximum score to win
+      gameSpeed: 1,           // Overall game speed multiplier
+      randomnessLevel: 15,    // Ball bounce randomness
+      powerUpInterval: 5000,  // Time between powerups
+      
+      // Apply settings from UI controls
+      applyFromUI: function() {
+        console.log("Applying settings from UI controls");
+        
+        // Get values from UI
+        const maxPointsInput = document.getElementById('max-score-setting');
+        const gameSpeedInput = document.getElementById('game-speed-setting');
+        const powerupFrequencySelect = document.getElementById('powerup-frequency');
+        
+        // Apply max points
+        if (maxPointsInput) {
+          this.maxPoints = parseInt(maxPointsInput.value) || 10;
+          this.maxPoints = Math.max(1, Math.min(99, this.maxPoints));
+          maxPointsInput.value = this.maxPoints; // Update UI
+          console.log("Set max points:", this.maxPoints);
+        }
+        
+        // Apply game speed
+        if (gameSpeedInput) {
+          this.gameSpeed = parseFloat(gameSpeedInput.value) || 1;
+          this.gameSpeed = Math.max(0.5, Math.min(2, this.gameSpeed));
+          gameSpeedInput.value = this.gameSpeed; // Update UI
+          console.log("Set game speed:", this.gameSpeed);
+        }
+        
+        // Apply powerup frequency
+        if (powerupFrequencySelect) {
+          this.powerUpInterval = parseInt(powerupFrequencySelect.value) || 5000;
+          console.log("Set powerup interval:", this.powerUpInterval);
+        }
+        
+        // Apply to game variables for backward compatibility
+        maxPoints = this.maxPoints;
+        gameSpeed = this.gameSpeed;
+        powerUpInterval = this.powerUpInterval;
+        
+        // Update speeds
+        if (ball && leftPaddle && rightPaddle) {
+          ball.speed = 5 * this.gameSpeed;
+          leftPaddle.speed = 5 * this.gameSpeed;
+          rightPaddle.speed = 5 * this.gameSpeed;
+        }
+      }
+    };
+    
+    // Game variables
+    let consecutiveHits = 0;
+    let isOnlineMode = false;
+    let isWaitingForOpponent = false;
+    let isPlaygroundMode = false;
+    
+    // Backward compatibility for direct access
+    let maxPoints = Settings.maxPoints;
+    let gameSpeed = Settings.gameSpeed;
+    let randomnessLevel = Settings.randomnessLevel;
+    let powerUpInterval = Settings.powerUpInterval;
+    
+    // ----- Background Animation Variables -----
+    const particles = [];
+    const NUM_PARTICLES = 50;
+    
+    // ----- UI Elements -----
+    const waitingMessage = document.createElement('div');
+    waitingMessage.className = 'game-message waiting-message';
+    waitingMessage.innerHTML = `
+      <h2>Waiting for Opponent</h2>
+      <p>Playing practice mode while searching...</p>
+      <div class="loading-spinner"></div>
+    `;
+    waitingMessage.style.display = 'none';
+    
+    // Add CSS for waiting spinner
+    const styleEl = document.createElement('style');
+    styleEl.textContent = `
+      .waiting-message {
+        background: rgba(0, 20, 40, 0.85);
+        padding: 20px 40px;
+        border-radius: 10px;
+        border: 2px solid var(--primary);
+        box-shadow: 0 0 20px rgba(0, 252, 255, 0.5);
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+        pointer-events: none;
+        z-index: 100;
+        max-width: 90%;
+      }
+      
+      .loading-spinner {
+        width: 30px;
+        height: 30px;
+        border: 3px solid rgba(0, 252, 255, 0.3);
+        border-top: 3px solid var(--primary);
+        border-radius: 50%;
+        margin: 10px auto;
+        animation: spin 1s linear infinite;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    `;
+    document.head.appendChild(styleEl);
+    
+    // ----- Game Objects -----
+    let leftPaddle = {
+      x: 30,
+      y: gameCanvas.height / 2 - PADDLE_HEIGHT / 2,
+      width: PADDLE_WIDTH,
+      height: PADDLE_HEIGHT,
+      speed: 5,
+      vy: 0,
+      score: 0,
+      isAI: true,
+      difficulty: 'normal',
+      activePowerUps: [],
+      color: '#00fcff' // cyan
+    };
+    
+    let rightPaddle = {
+      x: gameCanvas.width - 30 - PADDLE_WIDTH,
+      y: gameCanvas.height / 2 - PADDLE_HEIGHT / 2,
+      width: PADDLE_WIDTH,
+      height: PADDLE_HEIGHT,
+      speed: 5,
+      vy: 0,
+      score: 0,
+      isAI: true,
+      difficulty: 'normal',
+      activePowerUps: [],
+      color: '#ff00ff' // magenta
+    };
+    
+    let ball = {
+      x: gameCanvas.width / 2,
+      y: gameCanvas.height / 2,
+      dx: 5,
+      dy: 2,
+      radius: BALL_RADIUS,
+      speed: 5,
+      color: '#ffffff' // white
+    };
+    
+    // ----- Power-up Settings -----
+    let powerUps = [];
+    let powerUpTimer = 0;
+    // Power-up interval is controlled by the powerUpInterval variable
+    
+    const POWERUP_TYPES = ['speed', 'giant', 'shrink', 'shield', 'ballSpeed', 'ghost', 'multiBall', 'freeze'];
+    const POWERUP_CHANCES = {
+      speed: 10,
+      giant: 10,
+      shrink: 10,
+      shield: 10,
+      ballSpeed: 10,
+      ghost: 10,
+      multiBall: 10,
+      freeze: 10
+    };
+    
+    const POWERUP_COLORS = {
+      speed: '#ffeb3b',     // yellow
+      giant: '#FF9800',     // orange
+      shrink: '#800080',    // purple
+      shield: '#2196F3',    // blue
+      ballSpeed: '#f44336', // red
+      ghost: '#FFFFFF',     // white
+      multiBall: '#00FFFF', // cyan
+      freeze: '#008080',    // teal
+    };
+    
+    const POWERUP_ICONS = {
+      speed: '⚡',
+      giant: '↕️',
+      shrink: '↔️',
+      shield: '🛡️',
+      ballSpeed: '🔥',
+      ghost: '👻',
+      multiBall: '🔄',
+      freeze: '❄️',
+    };
+    
+    // ----- Input Handling -----
+    const keys = {
+      w: false,
+      s: false,
+      ArrowUp: false,
+      ArrowDown: false
+    };
+    
+    window.addEventListener('keydown', e => {
+      if (e.key in keys) {
+        keys[e.key] = true;
+        e.preventDefault();
+      }
+      
+      if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') {
+        togglePause();
+      }
+    });
+    
+    window.addEventListener('keyup', e => {
+      if (e.key in keys) {
+        keys[e.key] = false;
+        e.preventDefault();
+      }
+    });
+    
+    // Mobile touch controls
+    const touchControls = {
+      leftUp: false,
+      leftDown: false
+    };
+    
+    // Handle touch events for mobile controls
+    function setupTouchControls() {
+      const touchButtons = {
+        'left-up': 'leftUp',
+        'left-down': 'leftDown'
+      };
+      
+      Object.keys(touchButtons).forEach(id => {
+        const button = document.getElementById(id);
+        const controlName = touchButtons[id];
+        
+        button.addEventListener('touchstart', e => {
+          touchControls[controlName] = true;
+          e.preventDefault();
+        });
+        
+        button.addEventListener('touchend', e => {
+          touchControls[controlName] = false;
+          e.preventDefault();
+        });
+        
+        // Also add mouse events for testing on desktop
+        button.addEventListener('mousedown', e => {
+          touchControls[controlName] = true;
+          e.preventDefault();
+        });
+        
+        button.addEventListener('mouseup', e => {
+          touchControls[controlName] = false;
+          e.preventDefault();
+        });
+        
+        button.addEventListener('mouseout', e => {
+          touchControls[controlName] = false;
+          e.preventDefault();
+        });
+      });
+    }
+    
+    setupTouchControls();
+    
+    // ----- Button Event Listeners -----
+    document.getElementById('start-button').addEventListener('click', startGame);
+    document.getElementById('reset-button').addEventListener('click', resetGame);
+    document.getElementById('pause-button').addEventListener('click', togglePause);
+    
+    // Game mode buttons
+    document.getElementById('offline-mode').addEventListener('click', startOfflineMode);
+    document.getElementById('online-mode').addEventListener('click', startOnlineMode);
+    document.getElementById('quit-button').addEventListener('click', returnToMenu);
+    
+    // Settings panel buttons
+    document.getElementById('settings-apply').addEventListener('click', applySettings);
+    document.getElementById('settings-default').addEventListener('click', resetToDefaultSettings);
+    
+    // Matchmaking panel buttons
+    document.getElementById('quick-match').addEventListener('click', startQuickMatch);
+    document.getElementById('create-room').addEventListener('click', createRoom);
+    document.getElementById('join-room').addEventListener('click', joinRoom);
+    document.getElementById('copy-code').addEventListener('click', copyRoomCode);
+    document.getElementById('cancel-matchmaking').addEventListener('click', cancelMatchmaking);
+    document.getElementById('share-code').addEventListener('click', showRoomCode);
+    
+    // Settings listeners
+    document.getElementById('max-score-setting').addEventListener('change', updateMaxScore);
+    document.getElementById('game-speed-setting').addEventListener('input', updateGameSpeed);
+    document.getElementById('powerup-frequency').addEventListener('change', updatePowerUpFrequency);
+    document.getElementById('ai-difficulty').addEventListener('change', updateAIDifficulty);
+    document.getElementById('game-type-setting').addEventListener('change', updateGameType);
+    
+    // ----- Game Functions -----
+    
+    // Initialize background particles
+    function initParticles() {
+      for (let i = 0; i < NUM_PARTICLES; i++) {
+        particles.push({
+          x: Math.random() * bgCanvas.width,
+          y: Math.random() * bgCanvas.height,
+          radius: Math.random() * 3 + 1,
+          color: getRandomColor(),
+          dx: (Math.random() - 0.5) * 1.5,
+          dy: (Math.random() - 0.5) * 1.5
+        });
+      }
+    }
+    
+    // Get random color for particles
+    function getRandomColor() {
+      const colors = ['rgba(0, 252, 255, 0.7)', 'rgba(255, 0, 255, 0.7)', 'rgba(255, 255, 0, 0.7)', 'rgba(0, 255, 102, 0.7)'];
+      return colors[Math.floor(Math.random() * colors.length)];
+    }
+    
+    // Update background animation
+    function updateBackground() {
+      bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+      
+      // Draw starry background
+      bgCtx.fillStyle = 'rgb(15, 15, 42)';
+      bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+      
+      // Draw gradient overlay
+      const gradient = bgCtx.createLinearGradient(0, 0, bgCanvas.width, bgCanvas.height);
+      gradient.addColorStop(0, 'rgba(0, 20, 60, 0.5)');
+      gradient.addColorStop(1, 'rgba(30, 0, 60, 0.5)');
+      bgCtx.fillStyle = gradient;
+      bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+      
+      // Update and draw particles
+      for (let p of particles) {
+        p.x += p.dx;
+        p.y += p.dy;
+        
+        // Wrap around screen
+        if (p.x < 0) p.x = bgCanvas.width;
+        if (p.x > bgCanvas.width) p.x = 0;
+        if (p.y < 0) p.y = bgCanvas.height;
+        if (p.y > bgCanvas.height) p.y = 0;
+        
+        // Draw particle
+        bgCtx.beginPath();
+        bgCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        bgCtx.fillStyle = p.color;
+        bgCtx.fill();
+        
+        // Draw glow
+        bgCtx.shadowBlur = 10;
+        bgCtx.shadowColor = p.color;
+        bgCtx.fill();
+        bgCtx.shadowBlur = 0;
+      }
+      
+      // Draw animated lines between nearby particles
+      bgCtx.strokeStyle = 'rgba(0, 252, 255, 0.2)';
+      bgCtx.lineWidth = 1;
+      
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance < 150) {
+            bgCtx.beginPath();
+            bgCtx.moveTo(particles[i].x, particles[i].y);
+            bgCtx.lineTo(particles[j].x, particles[j].y);
+            bgCtx.globalAlpha = 1 - (distance / 150);
+            bgCtx.stroke();
+            bgCtx.globalAlpha = 1;
+          }
+        }
+      }
+    }
+    
+    // Start game
+    function startGame() {
+      if (gameState === 'start' || gameState === 'paused' || gameState === 'gameOver') {
+        gameState = 'playing';
+        hideElement('.game-message');
+      }
+    }
+    
+    // Toggle pause state
+    function togglePause() {
+      if (gameState === 'playing') {
+        gameState = 'paused';
+        showGameMessage('PAUSED', 'Press PAUSE or P to continue');
+      } else if (gameState === 'paused') {
+        gameState = 'playing';
+        hideElement('.game-message');
+      }
+    }
+    
+    // Start offline mode
+    function startOfflineMode() {
+      // Update UI
+      document.querySelectorAll('#game-mode-buttons button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      // Hide initial message
+      hideElement('.game-message');
+      
+      // Show settings panel
+      document.getElementById('offline-mode').classList.add('active');
+      document.getElementById('settings-panel').style.display = 'block';
+      document.getElementById('matchmaking-panel').style.display = 'none';
+      
+      // Hide game mode buttons and show back button
+      document.getElementById('game-mode-buttons').style.display = 'none';
+      document.getElementById('back-button-container').style.display = 'block';
+      
+      // Update game state
+      isOnlineMode = false;
+      isWaitingForOpponent = false;
+      isPlaygroundMode = true;
+      
+      // Load current settings from controls
+      updateMaxScore();
+      updateGameSpeed();
+      updatePowerUpFrequency();
+      updateAIDifficulty();
+      
+      // Update paddles - always human vs AI in offline mode
+      leftPaddle.isAI = false; 
+      rightPaddle.isAI = true; 
+      
+      // Hide waiting message if visible
+      waitingMessage.style.display = 'none';
+      
+      // Add waiting message to UI if needed
+      if (!document.querySelector('.waiting-message')) {
+        document.getElementById('ui-container').appendChild(waitingMessage);
+      }
+      
+      // Hide control help
+      hideControlInstructions();
+      
+      resetGame();
+      startGame(); // Automatically start the game
+    }
+    
+    // Apply settings button handler
+    function applySettings() {
+      // Apply all settings at once using the Settings object
+      Settings.applyFromUI();
+      
+      // Handle AI difficulty separately (not part of Settings object)
+      updateAIDifficulty();
+      
+      showNotification("Settings applied!");
+      console.log("Settings applied: maxPoints =", Settings.maxPoints, "gameSpeed =", Settings.gameSpeed);
+      
+      // If game is already running, reset it to apply new settings
+      if (gameState === 'playing' || gameState === 'paused') {
+        resetGame();
+        startGame();
+      }
+    }
+    
+    // Reset to default settings
+    function resetToDefaultSettings() {
+      document.getElementById('max-score-setting').value = 10;
+      document.getElementById('game-speed-setting').value = 1;
+      document.getElementById('powerup-frequency').value = 5000;
+      document.getElementById('ai-difficulty').value = 'normal';
+      
+      // Apply these default settings
+      applySettings();
+    }
+    
+    // Update max score from settings
+    function updateMaxScore() {
+      // Using Settings object to handle this
+      Settings.applyFromUI();
+    }
+    
+    // Update game speed from settings
+    function updateGameSpeed() {
+      // Using Settings object to handle this
+      Settings.applyFromUI();
+    }
+    
+    // Update power-up frequency from settings
+    function updatePowerUpFrequency() {
+      // Using Settings object to handle this
+      Settings.applyFromUI();
+      
+      // Clear all power-ups if disabled
+      if (Settings.powerUpInterval <= 0) {
+        powerUps = [];
+      }
+    }
+    
+    // Update AI difficulty from settings
+    function updateAIDifficulty() {
+      const difficultySelect = document.getElementById('ai-difficulty');
+      rightPaddle.difficulty = difficultySelect.value || 'normal';
+    }
+    
+    // Update game type (AI vs AI or Human vs AI)
+    function updateGameType() {
+      const gameTypeSelect = document.getElementById('game-type-setting');
+      const gameType = gameTypeSelect.value;
+      
+      if (gameType === 'ai-vs-ai') {
+        leftPaddle.isAI = true;
+        rightPaddle.isAI = true;
+      } else if (gameType === 'human-vs-ai') {
+        leftPaddle.isAI = false;
+        rightPaddle.isAI = true;
+      }
+      
+      // Update notification
+      showNotification("Game mode changed to " + gameType.replace(/-/g, ' ').toUpperCase());
+    }
+    
+    // Start online mode
+    function startOnlineMode() {
+      // Update UI
+      document.querySelectorAll('#game-mode-buttons button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      // Hide initial message
+      hideElement('.game-message');
+      
+      // Show online UI
+      document.getElementById('online-mode').classList.add('active');
+      document.getElementById('settings-panel').style.display = 'none';
+      document.getElementById('matchmaking-panel').style.display = 'block';
+      
+      // Hide game mode buttons and show back button
+      document.getElementById('game-mode-buttons').style.display = 'none';
+      document.getElementById('back-button-container').style.display = 'block';
+      
+      // Update game state
+      isOnlineMode = true;
+      isWaitingForOpponent = false; // Not yet waiting until they click matchmaking
+      isPlaygroundMode = false;
+      
+      // Reset to default online settings
+      maxPoints = 10;
+      gameSpeed = 1;
+      powerUpInterval = 5000;
+      ball.speed = 5;
+      leftPaddle.speed = 5;
+      rightPaddle.speed = 5;
+      rightPaddle.difficulty = 'normal';
+      
+      // Update paddles
+      leftPaddle.isAI = false; // Human always controls left paddle
+      rightPaddle.isAI = true; // AI controls right paddle
+      
+      // Hide waiting message if visible
+      waitingMessage.style.display = 'none';
+      
+      // Add waiting message to UI if needed
+      if (!document.querySelector('.waiting-message')) {
+        document.getElementById('ui-container').appendChild(waitingMessage);
+      }
+      
+      // Hide control help
+      hideControlInstructions();
+      
+      resetGame();
+      startGame(); // Start game in practice mode
+    }
+    
+    // Quick match function - finds a random opponent
+    function startQuickMatch() {
+      // Update matchmaking UI
+      document.getElementById('quick-match').style.display = 'none';
+      document.getElementById('create-room').style.display = 'none';
+      document.getElementById('join-room-container').style.display = 'none';
+      document.getElementById('cancel-matchmaking').style.display = 'inline-block';
+      document.getElementById('loading-spinner').style.display = 'block';
+      document.getElementById('status-message').textContent = 'Searching for opponent...';
+      
+      // Start waiting for opponent
+      isWaitingForOpponent = true;
+      
+      // Simulate finding an opponent after random time (in real implementation, this would be a server call)
+      const matchTimeout = Math.random() * 5000 + 3000;
+      waitingMessage.style.display = 'block';
+      
+      // Make sure we always find an opponent, even with multiple players/accounts
+      window.matchmakingTimeout = setTimeout(function() {
+        // Always successfully find an opponent in this implementation
+        foundOpponent();
+      }, matchTimeout);
+    }
+    
+    // Create a private room
+    function createRoom() {
+      // Generate a random 6-character code
+      const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      
+      // Update UI
+      document.getElementById('room-code').textContent = roomCode;
+      document.getElementById('room-code-container').style.display = 'block';
+      document.getElementById('share-code').style.display = 'inline-block';
+      document.getElementById('quick-match').style.display = 'none';
+      document.getElementById('create-room').style.display = 'none';
+      document.getElementById('join-room-container').style.display = 'none';
+      document.getElementById('cancel-matchmaking').style.display = 'inline-block';
+      document.getElementById('loading-spinner').style.display = 'block';
+      document.getElementById('status-message').textContent = 'Waiting for opponent to join...';
+      
+      // Start waiting for opponent
+      isWaitingForOpponent = true;
+      waitingMessage.style.display = 'block';
+      
+      // In a real implementation, we would create a room on the server
+    }
+    
+    // Join an existing room
+    function joinRoom() {
+      const roomCode = document.getElementById('join-code').value.trim().toUpperCase();
+      
+      if (!roomCode || roomCode.length !== 6) {
+        showNotification("Please enter a valid 6-character room code");
+        return;
+      }
+      
+      // Update UI
+      document.getElementById('quick-match').style.display = 'none';
+      document.getElementById('create-room').style.display = 'none';
+      document.getElementById('join-room-container').style.display = 'none';
+      document.getElementById('cancel-matchmaking').style.display = 'inline-block';
+      document.getElementById('loading-spinner').style.display = 'block';
+      document.getElementById('status-message').textContent = 'Joining room ' + roomCode + '...';
+      
+      // In a real implementation, we would attempt to join the room on the server
+      // For now, just simulate finding an opponent immediately
+      setTimeout(foundOpponent, 1500);
+      
+      // Start waiting for opponent connection
+      isWaitingForOpponent = true;
+      waitingMessage.style.display = 'block';
+    }
+    
+    // Show notification with room code
+    function showRoomCode() {
+      const roomCode = document.getElementById('room-code').textContent;
+      showNotification("Room Code: " + roomCode);
+    }
+    
+    // Copy room code to clipboard
+    function copyRoomCode() {
+      const roomCode = document.getElementById('room-code').textContent;
+      
+      // Copy to clipboard
+      navigator.clipboard.writeText(roomCode).then(() => {
+        showNotification("Room code copied to clipboard!");
+      }).catch(err => {
+        console.error('Failed to copy code: ', err);
+        showNotification("Failed to copy code. Please copy it manually.");
+      });
+    }
+    
+    // Cancel matchmaking
+    function cancelMatchmaking() {
+      // Update UI
+      document.getElementById('quick-match').style.display = 'inline-block';
+      document.getElementById('create-room').style.display = 'inline-block';
+      document.getElementById('join-room-container').style.display = 'block';
+      document.getElementById('cancel-matchmaking').style.display = 'none';
+      document.getElementById('loading-spinner').style.display = 'none';
+      document.getElementById('room-code-container').style.display = 'none';
+      document.getElementById('share-code').style.display = 'none';
+      document.getElementById('status-message').textContent = 'Click "Quick Match" to find an opponent';
+      
+      // Stop waiting for opponent
+      isWaitingForOpponent = false;
+      waitingMessage.style.display = 'none';
+      
+      // Clear any pending timeouts
+      if (window.matchmakingTimeout) {
+        clearTimeout(window.matchmakingTimeout);
+      }
+    }
+    
+    // Found opponent handler
+    function foundOpponent() {
+      if (!isWaitingForOpponent) return;
+      
+      // Hide waiting message
+      waitingMessage.style.display = 'none';
+      
+      // Reset for multiplayer game
+      leftPaddle.isAI = false;
+      rightPaddle.isAI = false; // In real implementation, this would be controlled by the server
+      
+      // Show countdown
+      showGameMessage('OPPONENT FOUND!', 'Game starting in 3...');
+      setTimeout(() => showGameMessage('OPPONENT FOUND!', 'Game starting in 2...'), 1000);
+      setTimeout(() => showGameMessage('OPPONENT FOUND!', 'Game starting in 1...'), 2000);
+      setTimeout(() => {
+        hideElement('.game-message');
+        resetGame();
+        startGame();
+        isWaitingForOpponent = false;
+      }, 3000);
+    }
+    
+    // Return to menu - not used with direct navigation back to index.html
+    function returnToMenu() {
+      window.location.href = 'index.html';
+    }
+    
+    // Reset the game
+    function resetGame() {
+      // Reset paddles
+      leftPaddle.y = gameCanvas.height / 2 - PADDLE_HEIGHT / 2;
+      leftPaddle.score = 0;
+      leftPaddle.height = PADDLE_HEIGHT;
+      leftPaddle.activePowerUps = [];
+      
+      rightPaddle.y = gameCanvas.height / 2 - PADDLE_HEIGHT / 2;
+      rightPaddle.score = 0;
+      rightPaddle.height = PADDLE_HEIGHT;
+      rightPaddle.activePowerUps = [];
+      
+      // Reset ball
+      resetBall();
+      
+      // Reset game variables
+      powerUps = [];
+      powerUpTimer = 0;
+      
+      // Make sure rally counter is reset
+      resetRallyCounter();
+      
+      // Reset UI
+      updateScoreDisplay();
+      updatePowerUpIndicators();
+      
+      // Show appropriate start message
+      gameState = 'start';
+      if (isOnlineMode && isWaitingForOpponent) {
+        // Don't show the main message, only the waiting message
+        hideElement('.game-message:not(.waiting-message)');
+      } else if (isPlaygroundMode) {
+        // Playground mode selected
+        showGameMessage('PLAYGROUND MODE', 'W/S keys to move - Adjust settings below');
+      } else if (document.getElementById('quit-button').style.display === 'inline-block') {
+        // Online mode selected but not waiting
+        showGameMessage('ONLINE MODE', 'Practice while waiting - W/S keys to move');
+      } else {
+        // No mode selected yet
+        showGameMessage('EXTREME PONG', 'Choose Game Mode to Play');
+      }
+    }
+    
+    // Reset ball position
+    function resetBall() {
+      // Check if this is the initial game start or after scoring
+      const isInitialStart = (gameState === 'start');
+      const isAfterScoring = true; // Force reset animation and timeout
+      
+      console.log("RESET BALL called, gameState =", gameState, "isInitialStart:", isInitialStart);
+      
+      // CRITICAL: Make sure any existing timeouts are cleared
+      if (window.ballResetTimer) {
+        clearTimeout(window.ballResetTimer);
+        window.ballResetTimer = null;
+      }
+      if (window.gameTimers && window.gameTimers.ballReset) {
+        clearTimeout(window.gameTimers.ballReset);
+        window.gameTimers.ballReset = null;
+      }
+      
+      // First reset position
+      ball.x = gameCanvas.width / 2;
+      ball.y = gameCanvas.height / 2;
+      
+      // CRITICAL: Reset rally counter immediately with the ball position reset
+      // This ensures it happens before any other code
+      resetRallyCounter();
+      
+      // Get current ball speed (or use default if no previous speed)
+      const originalDx = ball.dx;
+      const originalDy = ball.dy;
+      const originalSpeed = Math.sqrt(originalDx * originalDx + originalDy * originalDy) || ball.speed;
+      
+      // For initial start, set ball in motion immediately without delay
+      if (isInitialStart) {
+        // Limited angle between -25 and 25 degrees for more horizontal movement
+        const angle = (Math.random() * 50 - 25) * Math.PI / 180;
+        
+        // Random direction left or right
+        const direction = Math.random() < 0.5 ? 1 : -1;
+        
+        // Set to default speed for game start
+        ball.dx = direction * Math.cos(angle) * ball.speed;
+        ball.dy = Math.sin(angle) * ball.speed;
+        
+        // Enforce minimums for horizontal speed (at least 60% of total speed)
+        if (Math.abs(ball.dx) < ball.speed * 0.6) {
+            ball.dx = (ball.dx >= 0 ? 1 : -1) * ball.speed * 0.6;
+        }
+        
+        // Limit vertical speed to prevent "up and down" balls (max 40% of total speed)
+        if (Math.abs(ball.dy) > ball.speed * 0.4) {
+            ball.dy = (ball.dy >= 0 ? 1 : -1) * ball.speed * 0.4;
+        }
+        
+        console.log("Initial ball velocity set:", ball.dx, ball.dy);
+        return;
+      }
+      
+      // If after scoring, add visual pulse effect
+      if (isAfterScoring) {
+        const ballPulse = document.createElement('div');
+        ballPulse.style.position = 'absolute';
+        ballPulse.style.left = '50%';
+        ballPulse.style.top = '50%';
+        ballPulse.style.transform = 'translate(-50%, -50%)';
+        ballPulse.style.width = '30px';
+        ballPulse.style.height = '30px';
+        ballPulse.style.borderRadius = '50%';
+        ballPulse.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
+        ballPulse.style.boxShadow = '0 0 20px rgba(255, 255, 255, 0.9)';
+        ballPulse.style.zIndex = '5';
+        ballPulse.style.pointerEvents = 'none';
+        ballPulse.style.animation = 'ballReset 0.7s ease-out';
+        
+        // Create style for animation if it doesn't exist
+        if (!document.getElementById('ball-reset-style')) {
+          const style = document.createElement('style');
+          style.id = 'ball-reset-style';
+          style.textContent = `
+            @keyframes ballReset {
+              0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0.9; }
+              50% { transform: translate(-50%, -50%) scale(1.5); opacity: 0.5; }
+              100% { transform: translate(-50%, -50%) scale(0.1); opacity: 0; }
+            }
+          `;
+          document.head.appendChild(style);
+        }
+        
+        document.getElementById('ui-container').appendChild(ballPulse);
+        
+        // Remove the pulse element after animation completes
+        setTimeout(() => ballPulse.remove(), 700);
+        
+        // IMPORTANT: After scoring, always schedule ball to move after delay
+        // Stop ball movement temporarily but keep game state active
+        ball.dx = 0;
+        ball.dy = 0;
+        
+        // Schedule delayed restart with new direction after a short pause
+        // Store timer ID in both global locations for backward compatibility
+        const timerId = setTimeout(() => {
+          // Clear timer references once it executes
+          window.ballResetTimer = null;
+          if (window.gameTimers) window.gameTimers.ballReset = null;
+          // CRITICAL FIX: Double check the game state is still active
+          if (gameState === 'playing' || gameState === 'start') {
+            // Log before setting velocity
+            console.log("About to set new ball velocity after reset");
+            
+            // Random angle between -45 and 45 degrees
+            const angle = (Math.random() * 90 - 45) * Math.PI / 180;
+            
+            // Random direction left or right
+            const direction = Math.random() < 0.5 ? 1 : -1;
+            
+            // Use original speed to maintain game pace, with minimum speed guarantee
+            const newSpeed = Math.max(originalSpeed, ball.speed);
+            
+            // CRITICAL: Force ball velocity to non-zero values with minimum values
+            // Generate a better angle that focuses more on horizontal movement
+            // We want the angle to be mostly horizontal with limited vertical
+            const limitedAngle = (Math.random() * 50 - 25) * Math.PI / 180; // -25 to +25 degrees
+            
+            // Compute velocity with strong horizontal component
+            ball.dx = direction * Math.cos(limitedAngle) * newSpeed;
+            ball.dy = Math.sin(limitedAngle) * newSpeed;
+            
+            // Enforce minimums for horizontal speed (at least 60% of total speed)
+            if (Math.abs(ball.dx) < newSpeed * 0.6) {
+                ball.dx = (ball.dx >= 0 ? 1 : -1) * newSpeed * 0.6;
+            }
+            
+            // Limit vertical speed to prevent "up and down" balls (max 40% of total speed)
+            if (Math.abs(ball.dy) > newSpeed * 0.4) {
+                ball.dy = (ball.dy >= 0 ? 1 : -1) * newSpeed * 0.4;
+            }
+            
+            // Final sanity check - make sure we have significant horizontal movement
+            if (Math.abs(ball.dx) < 3) {
+                ball.dx = (ball.dx >= 0 ? 1 : -1) * 3;
+            }
+            
+            // Verify velocity was actually set
+            console.log("Ball velocity set to:", ball.dx, ball.dy);
+            
+            // Create a small burst effect when the ball starts moving
+            const burstParticles = 8;
+            for (let i = 0; i < burstParticles; i++) {
+              const angle = (i / burstParticles) * Math.PI * 2;
+              const distance = 2 + Math.random() * 2;
+              const particle = {
+                x: ball.x,
+                y: ball.y,
+                radius: Math.random() * 2 + 1,
+                color: ball.dx > 0 ? leftPaddle.color : rightPaddle.color,
+                dx: Math.cos(angle) * distance,
+                dy: Math.sin(angle) * distance,
+                life: 30
+              };
+              
+              // Add to the game particles
+              particles.push(particle);
+              
+              // Remove after time expires
+              setTimeout(() => {
+                const index = particles.indexOf(particle);
+                if (index > -1) {
+                  particles.splice(index, 1);
+                }
+              }, 500);
+            }
+          }
+        }, 600); // Reduced delay for better gameplay
+        
+        // Store timer ID in both places
+        window.ballResetTimer = timerId;
+        if (window.gameTimers) window.gameTimers.ballReset = timerId;
+      }
+      
+      // Allow animations to continue
+      return;
+    }
+    
+    // Update score display
+    function updateScoreDisplay() {
+      document.getElementById('left-score').textContent = leftPaddle.score;
+      document.getElementById('right-score').textContent = rightPaddle.score;
+    }
+    
+    // Update rally counter with new animations and effects
+    function updateRallyCounter() {
+      // Get or create counter element
+      let counter = document.getElementById('rally-counter');
+      
+      // If rally is too small, hide counter and return
+      if (consecutiveHits < 3) {
+        if (counter) {
+          // Set animation to disappear
+          counter.style.animation = 'rallyDisappear 0.3s forwards';
+          
+          // Hide after animation completes
+          setTimeout(() => {
+            counter.style.display = 'none';
+            counter.innerHTML = '';
+          }, 300);
+        }
+        return;
+      }
+      
+      // If counter doesn't exist or needs recreation
+      if (!counter || counter.dataset.needsReset === 'true') {
+        // If counter exists but needs reset, remove it
+        if (counter && counter.parentNode) {
+          counter.parentNode.removeChild(counter);
+        }
+        
+        // Create new counter element
+        counter = document.createElement('div');
+        counter.id = 'rally-counter';
+        counter.className = 'rally-counter rally-level-new';
+        
+        // Add to UI container
+        const uiContainer = document.getElementById('ui-container');
+        if (uiContainer) {
+          uiContainer.appendChild(counter);
+        } else {
+          document.body.appendChild(counter);
+        }
+      }
+      
+      // Build counter content
+      counter.innerHTML = `
+        <div style="font-weight:bold;">RALLY</div>
+        <div class="rally-count">${consecutiveHits}</div>
+      `;
+      
+      // Show counter with appear animation if it was hidden
+      if (counter.style.display === 'none') {
+        counter.style.animation = 'rallyAppear 0.3s forwards';
+      }
+      counter.style.display = 'block';
+      
+      // Remove any existing level classes
+      counter.classList.remove('rally-level-1', 'rally-level-2', 'rally-level-3', 'rally-level-4', 'rally-level-5');
+      
+      // Add appropriate class based on rally length with improved thresholds
+      let rallyLevel = 1; // Track level for sound effects
+      
+      if (consecutiveHits >= 20) {
+        counter.classList.add('rally-level-5');
+        rallyLevel = 5;
+      } else if (consecutiveHits >= 12) {
+        counter.classList.add('rally-level-4');
+        rallyLevel = 4;
+      } else if (consecutiveHits >= 8) {
+        counter.classList.add('rally-level-3');
+        rallyLevel = 3;
+      } else if (consecutiveHits >= 5) {
+        counter.classList.add('rally-level-2');
+        rallyLevel = 2;
+      } else {
+        counter.classList.add('rally-level-1');
+        rallyLevel = 1;
+      }
+      
+      // Add level milestone effects
+      if (rallyLevel > (counter.dataset.lastLevel || 0)) {
+        // Play sound effect for level up
+        try {
+          // Different sounds for different levels
+          const soundURLs = {
+            2: 'https://assets.mixkit.co/active_storage/sfx/958/958-preview.mp3',
+            3: 'https://assets.mixkit.co/active_storage/sfx/957/957-preview.mp3',
+            4: 'https://assets.mixkit.co/active_storage/sfx/956/956-preview.mp3',
+            5: 'https://assets.mixkit.co/active_storage/sfx/2039/2039-preview.mp3'
+          };
+          
+          if (soundURLs[rallyLevel]) {
+            const levelUpSound = new Audio(soundURLs[rallyLevel]);
+            levelUpSound.volume = 0.3;
+            levelUpSound.play().catch(e => console.warn('Could not play level up sound', e));
+          }
+        } catch (e) {
+          console.warn('Could not play level up sound', e);
+        }
+        
+        // Add visual effect for level up
+        if (rallyLevel >= 3) {
+          createEpicRallyEffect(rallyLevel);
+        }
+        
+        // Bounce animation for level up
+        counter.style.animation = 'rallyBounce 0.5s ease-out';
+        setTimeout(() => {
+          // Restore proper level animation after bounce
+          counter.style.animation = '';
+          counter.classList.add(`rally-level-${rallyLevel}`);
+        }, 500);
+      }
+      
+      // Store current level for next comparison
+      counter.dataset.lastLevel = rallyLevel;
+      
+      // Mark as not needing reset
+      counter.dataset.needsReset = 'false';
+    }
+    
+    // Reset the rally counter to zero and hide it
+    function resetRallyCounter() {
+      console.log("RESETTING RALLY COUNTER - consecutiveHits was:", consecutiveHits);
+      
+      // Reset hit counter first
+      consecutiveHits = 0;
+      
+      try {
+        // Get the counter element
+        const counter = document.getElementById('rally-counter');
+        
+        if (counter) {
+          // Apply disappearing animation
+          counter.style.animation = 'rallyDisappear 0.2s forwards';
+          
+          // Mark for recreation on next use
+          counter.dataset.needsReset = 'true';
+          
+          // Remove element completely after animation finishes
+          setTimeout(() => {
+            if (counter.parentNode) {
+              // Remove completely from DOM
+              counter.parentNode.removeChild(counter);
+              
+              // Create a placeholder element
+              const newCounter = document.createElement('div');
+              newCounter.id = 'rally-counter';
+              newCounter.className = 'rally-counter';
+              newCounter.style.display = 'none';
+              newCounter.dataset.needsReset = 'true';
+              
+              // Add the placeholder back to the UI
+              const uiContainer = document.getElementById('ui-container');
+              if (uiContainer) {
+                uiContainer.appendChild(newCounter);
+              }
+            }
+          }, 200);
+          
+          console.log("Rally counter reset with animation");
+        } else {
+          console.log("Rally counter not found, creating placeholder");
+          
+          // Create a placeholder element for next use
+          const uiContainer = document.getElementById('ui-container');
+          if (uiContainer) {
+            const newCounter = document.createElement('div');
+            newCounter.id = 'rally-counter';
+            newCounter.className = 'rally-counter';
+            newCounter.style.display = 'none';
+            newCounter.dataset.needsReset = 'true';
+            uiContainer.appendChild(newCounter);
+          }
+        }
+        
+        // Also reset the global counter
+        consecutiveHits = 0;
+        
+      } catch (e) {
+        console.error("Error resetting rally counter:", e);
+        
+        // Last resort fallback
+        consecutiveHits = 0;
+        try {
+          // Try to clear any existing counter forcefully
+          const counter = document.getElementById('rally-counter');
+          if (counter && counter.parentNode) {
+            counter.parentNode.removeChild(counter);
+          }
+        } catch (err) {
+          console.error("Failed final rally counter cleanup:", err);
+        }
+      }
+    }
+    
+    // Create epic visual effect for long rallies
+    function createEpicRallyEffect(level = 3) {
+      // Create a burst of particles from the center
+      const centerX = gameCanvas.width / 2;
+      const centerY = gameCanvas.height / 2;
+      
+      // Scale effect based on rally level
+      const particleCount = 10 + (level * 5); // 25-35 particles based on level
+      const particleSize = 2 + level; // Larger particles for higher levels
+      const particleSpeed = 3 + (level * 2); // Faster particles for higher levels
+      const particleLife = 1000 + (level * 500); // Longer lifespans for higher levels
+      
+      // Create burst particles
+      for (let i = 0; i < particleCount; i++) {
+        const angle = (i / particleCount) * Math.PI * 2;
+        const distance = particleSpeed + Math.random() * particleSpeed;
+        
+        // Different colors for different levels
+        let particleColor;
+        if (level === 5) {
+          particleColor = ['#ff3300', '#ff6600', '#ff9900', '#ffcc00'][Math.floor(Math.random() * 4)];
+        } else if (level === 4) {
+          particleColor = ['#ff6600', '#ff9900', '#ffcc00'][Math.floor(Math.random() * 3)];
+        } else {
+          particleColor = getRandomRallyColor();
+        }
+        
+        const particle = {
+          x: centerX,
+          y: centerY,
+          radius: Math.random() * particleSize + 2,
+          color: particleColor,
+          dx: Math.cos(angle) * distance,
+          dy: Math.sin(angle) * distance,
+          life: particleLife + Math.random() * particleLife/2,
+          // Add gravity for level 5
+          gravity: level >= 5 ? 0.05 : 0
+        };
+        
+        // Add to the game particles
+        particles.push(particle);
+        
+        // Store particle in gameTimers for proper cleanup
+        if (!window.gameTimers.animations) {
+          window.gameTimers.animations = [];
+        }
+        
+        // Remove particle after its lifetime
+        const timerId = setTimeout(() => {
+          const index = particles.indexOf(particle);
+          if (index > -1) {
+            particles.splice(index, 1);
+          }
+          // Remove timer reference
+          const timerIndex = window.gameTimers.animations.indexOf(timerId);
+          if (timerIndex > -1) {
+            window.gameTimers.animations.splice(timerIndex, 1);
+          }
+        }, particleLife + 500);
+        
+        // Track timer for cleanup
+        window.gameTimers.animations.push(timerId);
+      }
+      
+      // Add special effects for level 5
+      if (level >= 5) {
+        // Screen flash effect
+        const flash = document.createElement('div');
+        flash.style.position = 'absolute';
+        flash.style.top = '0';
+        flash.style.left = '0';
+        flash.style.width = '100%';
+        flash.style.height = '100%';
+        flash.style.backgroundColor = 'rgba(255, 120, 0, 0.2)';
+        flash.style.zIndex = '99';
+        flash.style.pointerEvents = 'none';
+        flash.style.animation = 'flashFade 0.5s forwards';
+        
+        // Add style for animation if it doesn't exist
+        if (!document.getElementById('flash-style')) {
+          const style = document.createElement('style');
+          style.id = 'flash-style';
+          style.textContent = `
+            @keyframes flashFade {
+              0% { opacity: 0.5; }
+              100% { opacity: 0; }
+            }
+          `;
+          document.head.appendChild(style);
+        }
+        
+        document.body.appendChild(flash);
+        
+        // Remove flash after animation
+        setTimeout(() => {
+          if (flash.parentNode) {
+            flash.parentNode.removeChild(flash);
+          }
+        }, 500);
+      }
+    }
+    
+    // Get random color for rally effects
+    function getRandomRallyColor() {
+      const colors = [
+        '#ffff00', // Yellow
+        '#ff9900', // Orange
+        '#ff6600', // Darker orange
+        '#ff3300', // Red-orange
+        '#ff00ff'  // Magenta
+      ];
+      return colors[Math.floor(Math.random() * colors.length)];
+    }
+    
+    // Update power-up indicators
+    function updatePowerUpIndicators() {
+      const leftIndicators = document.getElementById('left-power-ups');
+      const rightIndicators = document.getElementById('right-power-ups');
+      
+      leftIndicators.innerHTML = '';
+      rightIndicators.innerHTML = '';
+      
+      // Update left paddle power-ups
+      leftPaddle.activePowerUps.forEach(pu => {
+        if (Date.now() < pu.startTime + pu.duration) {
+          const timeLeft = Math.ceil((pu.startTime + pu.duration - Date.now()) / 1000);
+          const item = document.createElement('div');
+          item.className = 'power-up-item';
+          item.innerHTML = `
+            <span class="power-up-icon" style="background: ${POWERUP_COLORS[pu.type]}">${POWERUP_ICONS[pu.type]}</span>
+            ${pu.type} (${timeLeft}s)
+          `;
+          leftIndicators.appendChild(item);
+        }
+      });
+      
+      // Update right paddle power-ups
+      rightPaddle.activePowerUps.forEach(pu => {
+        if (Date.now() < pu.startTime + pu.duration) {
+          const timeLeft = Math.ceil((pu.startTime + pu.duration - Date.now()) / 1000);
+          const item = document.createElement('div');
+          item.className = 'power-up-item';
+          item.innerHTML = `
+            <span class="power-up-icon" style="background: ${POWERUP_COLORS[pu.type]}">${POWERUP_ICONS[pu.type]}</span>
+            ${pu.type} (${timeLeft}s)
+          `;
+          rightIndicators.appendChild(item);
+        }
+      });
+    }
+    
+    // Display a message in the center of the screen
+    function showGameMessage(title, message) {
+      let messageEl = document.querySelector('.game-message');
+      
+      if (!messageEl) {
+        messageEl = document.createElement('div');
+        messageEl.className = 'game-message';
+        document.getElementById('ui-container').appendChild(messageEl);
+      }
+      
+      messageEl.innerHTML = `
+        <h2>${title}</h2>
+        <p>${message}</p>
+      `;
+      
+      messageEl.style.display = 'block';
+    }
+    
+    // Hide an element
+    function hideElement(selector) {
+      const el = document.querySelector(selector);
+      if (el) el.style.display = 'none';
+    }
+    
+    // Show notification
+    function showNotification(message) {
+      const notification = document.createElement('div');
+      notification.className = 'notification';
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.remove();
+      }, 3000);
+    }
+    
+    // ----- Game Update Logic -----
+    
+    // Main update function
+    function update() {
+      // Skip updates if game is not playing
+      if (gameState !== 'playing') return;
+      
+      // Process human input
+      processInput();
+      
+      // Update AI paddles
+      if (leftPaddle.isAI) moveAI(leftPaddle);
+      if (rightPaddle.isAI) moveAI(rightPaddle);
+      
+      // Move paddles
+      leftPaddle.y += leftPaddle.vy;
+      rightPaddle.y += rightPaddle.vy;
+      
+      // Keep paddles within bounds
+      leftPaddle.y = Math.max(0, Math.min(gameCanvas.height - leftPaddle.height, leftPaddle.y));
+      rightPaddle.y = Math.max(0, Math.min(gameCanvas.height - rightPaddle.height, rightPaddle.y));
+      
+      // Move ball
+      ball.x += ball.dx;
+      ball.y += ball.dy;
+      
+      // Ball collision with top and bottom walls
+      if (ball.y - ball.radius < 0 || ball.y + ball.radius > gameCanvas.height) {
+        ball.dy = -ball.dy;
+        
+        // Add slight randomness to bounce
+        ball.dy += (Math.random() - 0.5) * (randomnessLevel / 100);
+        
+        // Add horizontal randomness too for more unpredictable bounces
+        ball.dx += (Math.random() - 0.5) * (randomnessLevel / 150);
+        
+        // Create small bounce effect
+        createSmallBounceEffect(ball.x, ball.y);
+      }
+      
+      // Ball collision with paddles
+      checkPaddleCollisions();
+      
+      // Ball out of bounds - scoring
+      // Use return value from checkScoring to prevent double-updates
+      if (checkScoring()) {
+        // Rally counter is now reset immediately in resetBall()
+        // Don't need to reset it here anymore
+        return; // Skip the rest of update logic if scoring happened
+      }
+      
+      // Update power-ups
+      updatePowerUps();
+      
+      // Update UI
+      updateScoreDisplay();
+      updatePowerUpIndicators();
+      updateRallyCounter();
+    }
+    
+    // Process keyboard and touch input
+    function processInput() {
+      // Left paddle human control
+      if (!leftPaddle.isAI) {
+        leftPaddle.vy = 0;
+        
+        // Keyboard
+        if (keys.w) leftPaddle.vy = -leftPaddle.speed;
+        if (keys.s) leftPaddle.vy = leftPaddle.speed;
+        
+        // Touch
+        if (touchControls.leftUp) leftPaddle.vy = -leftPaddle.speed;
+        if (touchControls.leftDown) leftPaddle.vy = leftPaddle.speed;
+      }
+      
+      // Right paddle human control
+      if (!rightPaddle.isAI) {
+        rightPaddle.vy = 0;
+        
+        // In online mode, right paddle is controlled by the opponent
+        // Here we'd update from network input in a real implementation
+        
+        // For testing only - arrow keys
+        if (keys.ArrowUp) rightPaddle.vy = -rightPaddle.speed;
+        if (keys.ArrowDown) rightPaddle.vy = rightPaddle.speed;
+      }
+    }
+    
+    // Function to hide control instructions
+    function hideControlInstructions() {
+      document.getElementById('controls-help').style.display = 'none';
+    }
+    
+    // AI paddle movement with improved smoothing and jitter prevention
+    function moveAI(paddle) {
+      // Store paddle's previous position and velocity for smoothing
+      if (!paddle.previousPositions) {
+        paddle.previousPositions = [];
+        for (let i = 0; i < 5; i++) {
+          paddle.previousPositions.push(paddle.y + paddle.height / 2);
+        }
+      }
+      
+      // Difficulty factors with added parameters for smoothness
+      let reactionSpeed, smoothingFactor, anticipationFactor, randomnessFactor;
+      switch(paddle.difficulty) {
+        case 'easy':
+          reactionSpeed = 0.3;
+          smoothingFactor = 0.6;
+          anticipationFactor = 0.3;
+          randomnessFactor = 0.3;
+          break;
+        case 'normal':
+          reactionSpeed = 0.6;
+          smoothingFactor = 0.75;
+          anticipationFactor = 0.5;
+          randomnessFactor = 0.2;
+          break;
+        case 'hard':
+          reactionSpeed = 0.8;
+          smoothingFactor = 0.85;
+          anticipationFactor = 0.7;
+          randomnessFactor = 0.1;
+          break;
+        case 'insane':
+          reactionSpeed = 0.95;
+          smoothingFactor = 0.95;
+          anticipationFactor = 0.9;
+          randomnessFactor = 0.05;
+          break;
+        default:
+          reactionSpeed = 0.6;
+          smoothingFactor = 0.75;
+          anticipationFactor = 0.5;
+          randomnessFactor = 0.2;
+      }
+      
+      // Target y position
+      let targetY;
+      
+      // Calculate ball speed and direction
+      const ballSpeed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
+      const isLeft = paddle === leftPaddle;
+      const ballMovingToward = (isLeft && ball.dx < 0) || (!isLeft && ball.dx > 0);
+      
+      // Add a small persistent offset to the AI's positioning based on paddle ID
+      // This makes each AI paddle have a slightly different "personality"
+      const paddleIdOffset = isLeft ? -5 : 5;
+      
+      if (ballMovingToward) {
+        // Predict where ball will cross paddle's x-position
+        const paddleX = isLeft ? paddle.x + paddle.width : paddle.x;
+        const distanceX = paddleX - ball.x;
+        
+        // Calculate time until impact
+        const timeToImpact = Math.abs(distanceX / ball.dx);
+        
+        // Use anticipation factor to increase prediction accuracy
+        const anticipation = anticipationFactor * (1 - Math.min(1, timeToImpact / 30));
+        
+        // Calculate bounce count more accurately
+        const bounces = Math.floor(Math.abs(distanceX / (ball.dx || 0.1))); // Avoid division by zero
+        
+        // Calculate ball position after bounces
+        let predictedY = ball.y + (ball.dy * (distanceX / (ball.dx || 0.1)));
+        
+        // Adjust for bounces with more accurate physics
+        if (bounces > 0) {
+          const canvasHeight = gameCanvas.height;
+          predictedY = canvasHeight - Math.abs(predictedY % (2 * canvasHeight) - canvasHeight);
+        }
+        
+        // Add small controlled randomness for human-like behavior
+        // The randomness decreases as ball gets closer (more focus/accuracy)
+        const distanceRatio = Math.min(1, Math.abs(distanceX) / gameCanvas.width);
+        const randomAmount = (Math.random() - 0.5) * 
+                             randomnessFactor * 
+                             distanceRatio * 
+                             gameCanvas.height / 3;
+        
+        predictedY += randomAmount + paddleIdOffset;
+        
+        // Ensure prediction is within bounds
+        targetY = Math.max(paddle.height/2, Math.min(gameCanvas.height - paddle.height/2, predictedY));
+      } else {
+        // Return to center with a slight offset when ball is moving away
+        // This looks more natural than always perfectly centering
+        targetY = (gameCanvas.height / 2) + paddleIdOffset + (Math.random() - 0.5) * 20;
+      }
+      
+      // Calculate paddle center
+      const paddleCenter = paddle.y + paddle.height / 2;
+      
+      // Store current position
+      paddle.previousPositions.push(paddleCenter);
+      if (paddle.previousPositions.length > 5) {
+        paddle.previousPositions.shift();
+      }
+      
+      // Calculate smoothed position using previous positions
+      let smoothedCenter = 0;
+      for (let i = 0; i < paddle.previousPositions.length; i++) {
+        smoothedCenter += paddle.previousPositions[i];
+      }
+      smoothedCenter /= paddle.previousPositions.length;
+      
+      // Calculate difference using smoothed position
+      const difference = targetY - smoothedCenter;
+      
+      // Add additional smoothing for more natural movement
+      // Different smoothing for small vs large movements
+      let velocitySmoothing;
+      if (Math.abs(difference) < 10) {
+        // Small adjustments - very smooth
+        velocitySmoothing = smoothingFactor * 0.15;
+      } else if (Math.abs(difference) < 50) {
+        // Medium adjustments - moderate smoothing
+        velocitySmoothing = smoothingFactor * 0.2;
+      } else {
+        // Large adjustments - quicker response
+        velocitySmoothing = smoothingFactor * 0.25;
+      }
+      
+      // Set paddle velocity with appropriate smoothing
+      paddle.vy = difference * reactionSpeed * velocitySmoothing;
+      
+      // Apply speed limit with smooth acceleration/deceleration
+      paddle.vy = Math.max(-paddle.speed, Math.min(paddle.speed, paddle.vy));
+      
+      // Add minimum movement threshold to prevent jittering when nearly aligned
+      if (Math.abs(difference) < 3 && Math.abs(paddle.vy) < 0.5) {
+        paddle.vy = 0;
+      }
+    }
+    
+    // Check for paddle collisions
+    function checkPaddleCollisions() {
+      // Left paddle collision
+      if (
+        ball.x - ball.radius <= leftPaddle.x + leftPaddle.width &&
+        ball.x + ball.radius >= leftPaddle.x &&
+        ball.y >= leftPaddle.y &&
+        ball.y <= leftPaddle.y + leftPaddle.height
+      ) {
+        // Increase consecutive hits
+        consecutiveHits++;
+        
+        // Calculate collision point relative to paddle center (range: -1 to 1)
+        const relativeIntersectY = (ball.y - (leftPaddle.y + leftPaddle.height / 2)) / (leftPaddle.height / 2);
+        
+        // Calculate bounce angle (max: ±75 degrees)
+        const bounceAngle = relativeIntersectY * (Math.PI / 2.4);
+        
+        // Calculate new velocity with slight speed increase
+        const speedIncrease = 1.05 + (consecutiveHits * 0.005);
+        const speed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy) * speedIncrease;
+        
+        ball.dx = Math.abs(speed * Math.cos(bounceAngle));
+        ball.dy = speed * Math.sin(bounceAngle);
+        
+        // Add slight randomness to vertical movement
+        ball.dy += (Math.random() - 0.5) * (randomnessLevel / 100);
+        
+        // Add small randomness to horizontal movement too
+        ball.dx += (Math.random() - 0.5) * (randomnessLevel / 200);
+        
+        // Collision effect on canvas
+        createPaddleCollisionEffect(leftPaddle.x + leftPaddle.width, ball.y, leftPaddle.color);
+      }
+      
+      // Right paddle collision
+      if (
+        ball.x + ball.radius >= rightPaddle.x &&
+        ball.x - ball.radius <= rightPaddle.x + rightPaddle.width &&
+        ball.y >= rightPaddle.y &&
+        ball.y <= rightPaddle.y + rightPaddle.height
+      ) {
+        // Increase consecutive hits
+        consecutiveHits++;
+        
+        // Calculate collision point relative to paddle center (range: -1 to 1)
+        const relativeIntersectY = (ball.y - (rightPaddle.y + rightPaddle.height / 2)) / (rightPaddle.height / 2);
+        
+        // Calculate bounce angle (max: ±75 degrees)
+        const bounceAngle = relativeIntersectY * (Math.PI / 2.4);
+        
+        // Calculate new velocity with slight speed increase
+        const speedIncrease = 1.05 + (consecutiveHits * 0.005);
+        const speed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy) * speedIncrease;
+        
+        ball.dx = -Math.abs(speed * Math.cos(bounceAngle));
+        ball.dy = speed * Math.sin(bounceAngle);
+        
+        // Add slight randomness to vertical movement
+        ball.dy += (Math.random() - 0.5) * (randomnessLevel / 100);
+        
+        // Add small randomness to horizontal movement too
+        ball.dx -= (Math.random() - 0.5) * (randomnessLevel / 200);
+        
+        // Collision effect on canvas
+        createPaddleCollisionEffect(rightPaddle.x, ball.y, rightPaddle.color);
+      }
+    }
+    
+    // Create visual effect for paddle collision
+    function createPaddleCollisionEffect(x, y, color) {
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2;
+        const particle = {
+          x: x,
+          y: y,
+          radius: Math.random() * 3 + 2,
+          color: color,
+          dx: Math.cos(angle) * (Math.random() * 3 + 2),
+          dy: Math.sin(angle) * (Math.random() * 3 + 2),
+          life: 30
+        };
+        
+        // Add to the game particles (simplified - just adding to background particles)
+        particles.push(particle);
+        
+        // Remove after time expires to avoid too many particles
+        setTimeout(() => {
+          const index = particles.indexOf(particle);
+          if (index > -1) {
+            particles.splice(index, 1);
+          }
+        }, 500);
+      }
+    }
+    
+    // Create small bounce effect for wall collisions
+    function createSmallBounceEffect(x, y) {
+      // Create fewer particles for wall bounces to reduce visual noise
+      for (let i = 0; i < 4; i++) {
+        const angle = (i / 4) * Math.PI * 2;
+        const particle = {
+          x: x,
+          y: y < gameCanvas.height/2 ? y + 5 : y - 5, // Offset slightly from wall
+          radius: Math.random() * 2 + 1,
+          color: 'rgba(255, 255, 255, 0.7)',
+          dx: Math.cos(angle) * (Math.random() * 2 + 1),
+          dy: Math.sin(angle) * (Math.random() * 2 + 1) * (y < gameCanvas.height/2 ? 1 : -1), // Bounce away from wall
+          life: 15
+        };
+        
+        // Add to the game particles
+        particles.push(particle);
+        
+        // Remove after time expires
+        setTimeout(() => {
+          const index = particles.indexOf(particle);
+          if (index > -1) {
+            particles.splice(index, 1);
+          }
+        }, 300);
+      }
+    }
+    
+    // Check for scoring with floating score animations
+    function checkScoring() {
+      // Ball out of bounds left side
+      if (ball.x - ball.radius < 0) {
+        // Right player scores
+        rightPaddle.score++;
+        
+        // Play score sound effect
+        try {
+          const scoreSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2004/2004-preview.mp3');
+          scoreSound.volume = 0.5;
+          scoreSound.play().catch(e => console.warn('Could not play score sound', e));
+        } catch (e) {
+          console.warn('Could not play score sound', e);
+        }
+        
+        // Create floating score animation for right player
+        createFloatingScoreAnimation(ball.x, ball.y, 'right');
+        
+        // Check for win (only if not in unlimited practice mode)
+        if (maxPoints !== Infinity && rightPaddle.score >= maxPoints) {
+          gameState = 'finished';
+          
+          // Create winner animation
+          createWinnerAnimation('right');
+          
+          if (isOnlineMode) {
+            showGameMessage('GAME OVER', 'Your opponent won! Press RESET to play again');
+          } else {
+            showGameMessage('GAME OVER', 'AI won! Press RESET to play again');
+          }
+        } else {
+          // Use the improved resetBall function which handles animations
+          // resetBall already calls resetRallyCounter() at the start
+          resetBall();
+        }
+        
+        updateScoreDisplay();
+        
+        // Rally counter is already reset in resetBall(), this is just for redundancy
+        // resetRallyCounter();
+        
+        // Return true to indicate scoring happened
+        return true;
+      }
+      
+      // Ball out of bounds right side
+      if (ball.x + ball.radius > gameCanvas.width) {
+        // Left player scores
+        leftPaddle.score++;
+        
+        // Play score sound effect
+        try {
+          const scoreSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2004/2004-preview.mp3');
+          scoreSound.volume = 0.5;
+          scoreSound.play().catch(e => console.warn('Could not play score sound', e));
+        } catch (e) {
+          console.warn('Could not play score sound', e);
+        }
+        
+        // Create floating score animation for left player
+        createFloatingScoreAnimation(ball.x, ball.y, 'left');
+        
+        // Check for win (only if not in unlimited practice mode)
+        if (maxPoints !== Infinity && leftPaddle.score >= maxPoints) {
+          gameState = 'finished';
+          
+          // Create winner animation
+          createWinnerAnimation('left');
+          
+          if (isOnlineMode) {
+            showGameMessage('YOU WIN!', 'Congratulations! Press RESET to play again');
+          } else {
+            showGameMessage('YOU WIN!', 'You beat the AI! Press RESET to play again');
+          }
+        } else {
+          // Use the improved resetBall function which handles animations
+          // resetBall already calls resetRallyCounter() at the start
+          resetBall();
+        }
+        
+        updateScoreDisplay();
+        
+        // Rally counter is already reset in resetBall(), this is just for redundancy
+        // resetRallyCounter();
+        
+        // Return true to indicate scoring happened
+        return true;
+      }
+      
+      // Return false if no scoring happened
+      return false;
+    }
+    
+    // Create floating score animation
+    function createFloatingScoreAnimation(x, y, scorer) {
+      // Create a div for the floating score
+      const floatingScore = document.createElement('div');
+      floatingScore.className = 'floating-score';
+      
+      // Set position relative to where the ball went out
+      floatingScore.style.position = 'absolute';
+      floatingScore.style.left = `${x / gameCanvas.width * 100}%`;
+      floatingScore.style.top = `${y / gameCanvas.height * 100}%`;
+      
+      // Set text and styling based on who scored
+      if (scorer === 'left') {
+        floatingScore.textContent = '+1';
+        floatingScore.style.color = leftPaddle.color || '#00fcff';
+      } else {
+        floatingScore.textContent = '+1';
+        floatingScore.style.color = rightPaddle.color || '#ff00ff';
+      }
+      
+      // Add to the game container
+      document.querySelector('.game-container').appendChild(floatingScore);
+      
+      // Animate the floating score
+      floatingScore.animate([
+        { 
+          opacity: 1, 
+          transform: 'translate(-50%, -50%) scale(1.5)' 
+        },
+        { 
+          opacity: 0, 
+          transform: 'translate(-50%, -150%) scale(2.5)' 
+        }
+      ], {
+        duration: 1200,
+        easing: 'cubic-bezier(0.2, 0, 0.4, 1)'
+      });
+      
+      // Remove the element after animation completes
+      setTimeout(() => {
+        floatingScore.remove();
+      }, 1200);
+    }
+    
+    // Create winner animation with particles and text effects
+    function createWinnerAnimation(winner) {
+      // Play victory sound
+      try {
+        const victorySound = new Audio('https://assets.mixkit.co/active_storage/sfx/956/956-preview.mp3');
+        victorySound.volume = 0.6;
+        victorySound.play().catch(e => console.warn('Could not play victory sound', e));
+      } catch (e) {
+        console.warn('Could not play victory sound', e);
+      }
+      
+      // Create winner text element
+      const winnerText = document.createElement('div');
+      winnerText.className = 'winner-text';
+      
+      if (winner === 'left') {
+        winnerText.innerHTML = `
+          <div class="winner-title" style="color: ${leftPaddle.color || '#00fcff'}">VICTORY!</div>
+          <div class="winner-subtitle">${leftPaddle.isAI ? 'AI' : 'Player 1'} wins!</div>
+        `;
+      } else {
+        winnerText.innerHTML = `
+          <div class="winner-title" style="color: ${rightPaddle.color || '#ff00ff'}">VICTORY!</div>
+          <div class="winner-subtitle">${rightPaddle.isAI ? 'AI' : 'Player 2'} wins!</div>
+        `;
+      }
+      
+      // Add to the game container
+      document.querySelector('.game-container').appendChild(winnerText);
+      
+      // Create particle explosion for the winner
+      const centerX = gameCanvas.width / 2;
+      const centerY = gameCanvas.height / 2;
+      const winnerColor = (winner === 'left') ? 
+        (leftPaddle.color || '#00fcff') : 
+        (rightPaddle.color || '#ff00ff');
+      
+      // Create a burst of celebration particles
+      for (let i = 0; i < 100; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 5 + Math.random() * 15;
+        const delay = Math.random() * 2000;
+        
+        setTimeout(() => {
+          const particle = {
+            x: centerX,
+            y: centerY,
+            radius: Math.random() * 4 + 2,
+            color: i % 3 === 0 ? winnerColor : '#ffffff',
+            dx: Math.cos(angle) * distance * (0.5 + Math.random() * 0.5),
+            dy: Math.sin(angle) * distance * (0.5 + Math.random() * 0.5) - 2, // Slight upward bias
+            life: 100 + Math.random() * 100,
+            gravity: 0.05
+          };
+          
+          // Add to the game particles
+          particles.push(particle);
+          
+          // Add gravity effect to celebration particles
+          const originalUpdate = particle.update;
+          particle.update = function() {
+            this.dy += this.gravity;
+            if (originalUpdate) originalUpdate.call(this);
+          };
+          
+          // Remove after lifetime expires
+          setTimeout(() => {
+            const index = particles.indexOf(particle);
+            if (index > -1) {
+              particles.splice(index, 1);
+            }
+          }, 3000);
+        }, delay);
+      }
+      
+      // Show winner message and clean up animation after it's done
+      setTimeout(() => {
+        winnerText.remove();
+      }, 5000);
+    }
+    
+    // Spawn a power-up
+    function spawnPowerUp() {
+      // Choose a power-up type based on chances
+      let r = Math.random() * 100;
+      let cumulative = 0;
+      let type;
+      
+      for (const [key, chance] of Object.entries(POWERUP_CHANCES)) {
+        cumulative += chance;
+        if (r <= cumulative) {
+          type = key;
+          break;
+        }
+      }
+      
+      if (!type) return;
+      
+      // Create power-up in random position (not too close to edges or center)
+      const minX = 100;
+      const maxX = gameCanvas.width - 100;
+      const centerZone = 80;
+      
+      // Avoid center zone
+      let x;
+      do {
+        x = Math.random() * (maxX - minX) + minX;
+      } while (x > gameCanvas.width / 2 - centerZone && x < gameCanvas.width / 2 + centerZone);
+      
+      const y = Math.random() * (gameCanvas.height - 100) + 50;
+      
+      powerUps.push({
+        type,
+        x,
+        y,
+        size: POWERUP_SIZE,
+        duration: 5000 + Math.random() * 5000, // 5-10 seconds
+        collected: false
+      });
+    }
+    
+    // Update power-ups
+    function updatePowerUps() {
+      // Spawn new power-ups (only if powerUpInterval > 0)
+      if (powerUpInterval > 0) {
+        powerUpTimer += 16.67; // Approx 60fps
+        if (powerUpTimer >= powerUpInterval) {
+          spawnPowerUp();
+          powerUpTimer = 0;
+        }
+      }
+      
+      // Check for ball collision with power-ups
+      for (let i = powerUps.length - 1; i >= 0; i--) {
+        const pu = powerUps[i];
+        
+        if (!pu.collected) {
+          // Check for collision
+          const dx = ball.x - pu.x;
+          const dy = ball.y - pu.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance < ball.radius + pu.size / 2) {
+            // Determine which paddle gets the power-up based on ball direction
+            const paddle = ball.dx > 0 ? leftPaddle : rightPaddle;
+            
+            // Apply power-up
+            applyPowerUp(paddle, pu.type, pu.duration);
+            
+            // Mark as collected
+            pu.collected = true;
+            
+            // Remove after animation
+            setTimeout(() => {
+              const index = powerUps.indexOf(pu);
+              if (index !== -1) {
+                powerUps.splice(index, 1);
+              }
+            }, 300);
+          }
+        }
+      }
+      
+      // Filter out expired power-ups
+      [leftPaddle, rightPaddle].forEach(paddle => {
+        paddle.activePowerUps = paddle.activePowerUps.filter(pu => {
+          return Date.now() < pu.startTime + pu.duration;
+        });
+        
+        // Reset to defaults
+        paddle.height = PADDLE_HEIGHT;
+        paddle.speed = 5;
+        
+        // Apply active power-up effects
+        paddle.activePowerUps.forEach(pu => {
+          applyPowerUpEffect(paddle, pu);
+        });
+      });
+    }
+    
+    // Apply power-up to a paddle
+    function applyPowerUp(paddle, type, duration) {
+      // Add power-up to active power-ups
+      paddle.activePowerUps.push({
+        type,
+        startTime: Date.now(),
+        duration
+      });
+      
+      // Show notification
+      showNotification(`${paddle === leftPaddle ? 'Left' : 'Right'} paddle got ${type}!`);
+    }
+    
+    // Apply power-up effect
+    function applyPowerUpEffect(paddle, powerUp) {
+      const opponent = paddle === leftPaddle ? rightPaddle : leftPaddle;
+      
+      switch(powerUp.type) {
+        case 'speed':
+          paddle.speed = 8; // Increased speed
+          break;
+          
+        case 'giant':
+          paddle.height = PADDLE_HEIGHT * 1.5; // Bigger paddle
+          break;
+          
+        case 'shrink':
+          opponent.height = PADDLE_HEIGHT * 0.6; // Smaller opponent paddle
+          break;
+          
+        case 'shield':
+          // Shield is handled when ball goes out of bounds
+          break;
+          
+        case 'ballSpeed':
+          // Increase ball speed when moving toward opponent
+          const isLeft = paddle === leftPaddle;
+          if ((isLeft && ball.dx > 0) || (!isLeft && ball.dx < 0)) {
+            const speedFactor = 1.5;
+            const magnitude = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
+            const newMagnitude = magnitude * speedFactor;
+            ball.dx = (ball.dx / magnitude) * newMagnitude;
+            ball.dy = (ball.dy / magnitude) * newMagnitude;
+          }
+          break;
+          
+        case 'ghost':
+          // Visual effect only - handled in render
+          break;
+          
+        case 'freeze':
+          opponent.speed = 1; // Slow down opponent
+          break;
+          
+        case 'multiBall':
+          // Not implemented in this simplified version
+          break;
+      }
+    }
+    
+    // ----- Rendering -----
+    
+    // Main render function
+    function render() {
+      // Clear canvas
+      ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+      
+      // Draw field
+      drawField();
+      
+      // Draw power-ups
+      drawPowerUps();
+      
+      // Draw paddles
+      drawPaddle(leftPaddle);
+      drawPaddle(rightPaddle);
+      
+      // Draw ball
+      drawBall();
+    }
+    
+    // Draw the game field
+    function drawField() {
+      // Draw center line
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.setLineDash([10, 10]);
+      ctx.beginPath();
+      ctx.moveTo(gameCanvas.width / 2, 0);
+      ctx.lineTo(gameCanvas.width / 2, gameCanvas.height);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      
+      // Draw center circle
+      ctx.beginPath();
+      ctx.arc(gameCanvas.width / 2, gameCanvas.height / 2, 50, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.stroke();
+    }
+    
+    // Draw a paddle
+    function drawPaddle(paddle) {
+      ctx.save();
+      
+      // Get active power-ups
+      const hasGiant = paddle.activePowerUps.some(pu => pu.type === 'giant');
+      const hasShrink = paddle.activePowerUps.some(pu => pu.type === 'shrink');
+      const hasSpeed = paddle.activePowerUps.some(pu => pu.type === 'speed');
+      const hasFreeze = paddle.activePowerUps.some(pu => pu.type === 'freeze');
+      const hasShield = paddle.activePowerUps.some(pu => pu.type === 'shield');
+      
+      // Paddle color
+      ctx.fillStyle = paddle.color;
+      
+      // Add glow effect based on power-ups
+      if (hasGiant) {
+        ctx.shadowColor = '#FF9800';
+        ctx.shadowBlur = 15;
+      } else if (hasShrink) {
+        ctx.shadowColor = '#800080';
+        ctx.shadowBlur = 15;
+      } else if (hasSpeed) {
+        ctx.shadowColor = '#FFEB3B';
+        ctx.shadowBlur = 15;
+      } else if (hasFreeze) {
+        ctx.shadowColor = '#008080';
+        ctx.shadowBlur = 15;
+      } else {
+        ctx.shadowColor = paddle.color;
+        ctx.shadowBlur = 10;
+      }
+      
+      // Draw the paddle with rounded corners
+      ctx.beginPath();
+      ctx.roundRect(
+        paddle.x,
+        paddle.y,
+        paddle.width,
+        paddle.height,
+        5 // Rounded corners
+      );
+      ctx.fill();
+      
+      // Draw shield if active
+      if (hasShield) {
+        ctx.strokeStyle = '#2196F3';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        
+        if (paddle === leftPaddle) {
+          // Shield on the left side
+          ctx.arc(
+            paddle.x + paddle.width + 20,
+            paddle.y + paddle.height / 2,
+            paddle.height / 1.5,
+            Math.PI * 0.5,
+            Math.PI * 1.5
+          );
+        } else {
+          // Shield on the right side
+          ctx.arc(
+            paddle.x - 20,
+            paddle.y + paddle.height / 2,
+            paddle.height / 1.5,
+            Math.PI * 1.5,
+            Math.PI * 0.5
+          );
+        }
+        
+        ctx.stroke();
+        
+        // Add shield glow
+        ctx.shadowColor = '#2196F3';
+        ctx.shadowBlur = 15;
+        ctx.stroke();
+      }
+      
+      ctx.restore();
+    }
+    
+    // Draw the ball
+    function drawBall() {
+      ctx.save();
+      
+      // Check for ghost effect
+      const leftGhost = leftPaddle.activePowerUps.some(pu => pu.type === 'ghost');
+      const rightGhost = rightPaddle.activePowerUps.some(pu => pu.type === 'ghost');
+      
+      // Apply ghost effect if the ball is traveling toward a paddle with ghost active
+      if ((leftGhost && ball.dx < 0) || (rightGhost && ball.dx > 0)) {
+        ctx.globalAlpha = 0.3;
+      }
+      
+      // Create gradient for the ball
+      const gradient = ctx.createRadialGradient(
+        ball.x, ball.y, 0,
+        ball.x, ball.y, ball.radius
+      );
+      gradient.addColorStop(0, '#ffffff');
+      gradient.addColorStop(1, ball.dx > 0 ? leftPaddle.color : rightPaddle.color);
+      
+      ctx.fillStyle = gradient;
+      ctx.shadowColor = ball.dx > 0 ? leftPaddle.color : rightPaddle.color;
+      ctx.shadowBlur = 10;
+      
+      // Draw the ball
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Draw ball trail for high speeds
+      const speed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
+      if (speed > 7) {
+        ctx.globalAlpha = 0.3;
+        ctx.beginPath();
+        ctx.arc(ball.x - ball.dx/3, ball.y - ball.dy/3, ball.radius * 0.8, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.globalAlpha = 0.15;
+        ctx.beginPath();
+        ctx.arc(ball.x - ball.dx/1.5, ball.y - ball.dy/1.5, ball.radius * 0.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      
+      ctx.restore();
+    }
+    
+    // Draw power-ups
+    function drawPowerUps() {
+      powerUps.forEach(pu => {
+        if (!pu.collected) {
+          ctx.save();
+          
+          // Get power-up color
+          const color = POWERUP_COLORS[pu.type];
+          
+          // Draw power-up
+          ctx.fillStyle = color;
+          ctx.shadowColor = color;
+          ctx.shadowBlur = 10;
+          
+          // Pulsating effect
+          const pulseSize = 1 + Math.sin(Date.now() * 0.005) * 0.2;
+          
+          // Draw circle
+          ctx.beginPath();
+          ctx.arc(pu.x, pu.y, pu.size / 2 * pulseSize, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Draw outline
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(pu.x, pu.y, pu.size / 2 * pulseSize, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          // Draw icon
+          ctx.fillStyle = '#ffffff';
+          ctx.font = '12px Arial';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(POWERUP_ICONS[pu.type], pu.x, pu.y);
+          
+          ctx.restore();
+        }
+      });
+    }
+    
+    // ----- Game Loop -----
+    
+    // Add roundRect if not supported (for older browsers)
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+      CanvasRenderingContext2D.prototype.roundRect = function (x, y, width, height, radius) {
+        if (width < 2 * radius) radius = width / 2;
+        if (height < 2 * radius) radius = height / 2;
+        this.beginPath();
+        this.moveTo(x + radius, y);
+        this.arcTo(x + width, y, x + width, y + height, radius);
+        this.arcTo(x + width, y + height, x, y + height, radius);
+        this.arcTo(x, y + height, x, y, radius);
+        this.arcTo(x, y, x + width, y, radius);
+        this.closePath();
+        return this;
+      };
+    }
+    
+    // Global state tracker for active game timers
+    window.gameTimers = {
+      ballReset: null,
+      gameMessage: null,
+      animations: []
+    };
+    
+    // Helper function to clear all game timers
+    function clearAllGameTimers() {
+      // Clear ball reset timer
+      if (window.gameTimers.ballReset) {
+        clearTimeout(window.gameTimers.ballReset);
+        window.gameTimers.ballReset = null;
+      }
+      
+      // Clear game message timer
+      if (window.gameTimers.gameMessage) {
+        clearTimeout(window.gameTimers.gameMessage);
+        window.gameTimers.gameMessage = null;
+      }
+      
+      // Clear all animation timers
+      window.gameTimers.animations.forEach(timer => clearTimeout(timer));
+      window.gameTimers.animations = [];
+      
+      // For backward compatibility
+      if (window.ballResetTimer) {
+        clearTimeout(window.ballResetTimer);
+        window.ballResetTimer = null;
+      }
+    }
+    
+    // Game loop
+    function gameLoop() {
+      try {
+        // DEBUGGING: Track game loop execution
+        if (Math.random() < 0.01) {
+          console.log("Game loop running, state =", gameState);
+          console.log("Ball position:", ball.x, ball.y);
+          console.log("Ball velocity:", ball.dx, ball.dy);
+          
+          // Log timer status
+          console.log("Timer status:", {
+            ballResetTimer: Boolean(window.ballResetTimer),
+            gameTimers: window.gameTimers ? {
+              ballReset: Boolean(window.gameTimers.ballReset),
+              animations: window.gameTimers.animations.length
+            } : null
+          });
+        }
+        
+        // Debug: Force ball movement if it's been stationary for too long
+        if (gameState === 'playing' && Math.abs(ball.dx) <= 0.1 && Math.abs(ball.dy) <= 0.1) {
+          console.warn("Ball appears to be stuck! Position:", ball.x, ball.y);
+          console.warn("Force-setting ball velocity");
+          // Set to a reasonable speed in a random direction
+          const angle = Math.random() * Math.PI * 2;
+          ball.dx = Math.cos(angle) * ball.speed * (Math.random() < 0.5 ? 1 : -1);
+          ball.dy = Math.sin(angle) * ball.speed;
+        }
+        
+        // Update background - ALWAYS RUN THIS FOR ANIMATIONS
+        updateBackground();
+        
+        // Update game logic if in appropriate state
+        if (gameState === 'playing' || gameState === 'start') {
+          update();
+        }
+        
+        // ALWAYS render game - critical for animations to continue
+        render();
+        
+        // Next frame
+        requestAnimationFrame(gameLoop);
+      } catch (e) {
+        console.error("Game loop error:", e);
+        
+        // Emergency recovery - keep animations going no matter what
+        ball.x = gameCanvas.width / 2;
+        ball.y = gameCanvas.height / 2;
+        ball.dx = 0;
+        ball.dy = 0;
+        gameState = 'playing';
+        
+        // Clear any problematic timers
+        clearAllGameTimers();
+        
+        // Continue loop
+        requestAnimationFrame(gameLoop);
+      }
+    }
+    
+    // Initialize the game
+    function init() {
+      // Clear any existing timeouts
+      if (window.ballResetTimer) {
+        clearTimeout(window.ballResetTimer);
+      }
+      
+      // Initialize background particles
+      initParticles();
+      
+      // Add waiting message to UI
+      document.getElementById('ui-container').appendChild(waitingMessage);
+      
+      // Initialize game
+      resetGame();
+      
+      // Start game loop
+      gameLoop();
+      
+      // Check for hash in URL to determine startup mode
+      if (window.location.hash === '#offline') {
+        // Launch directly into offline mode
+        setTimeout(() => {
+          startOfflineMode();
+        }, 500);
+      } else if (window.location.hash === '#online') {
+        // Launch directly into online mode
+        setTimeout(() => {
+          startOnlineMode();
+        }, 500);
+      } else {
+        // Show the game selection menu
+        showGameMessage('EXTREME PONG', 'Choose Game Mode to Play');
+      }
+      
+      // Add listeners
+      document.getElementById('offline-mode').addEventListener('click', hideControlInstructions);
+    }
+    
+    // Start the game
+    init();
+  </script>
+</body>
+</html>
